@@ -2,6 +2,10 @@ import { graphql } from '@octokit/graphql';
 import { fetchRepoIssues, fetchRepoPullRequests } from "./github";
 import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
 
+function millisecondsToDays(milliseconds: number) {
+  return milliseconds / 1000 / 60 / 60 / 24;
+}
+
 interface AggregatedData {
   totalStars: number;
   totalForks: number;
@@ -38,8 +42,8 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
     prMetrics = processPullRequests(pullRequests, prMetrics);
   }
 
-  const averageTimeToClose = calculateAverage(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount);
-  const averageTimeToMerge = calculateAverage(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount);
+  const averageTimeToClose = millisecondsToDays(calculateAverage(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount));
+  const averageTimeToMerge = millisecondsToDays(calculateAverage(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount));
   const averageCommentsPerIssue = calculateAverage(issueMetrics.totalCommentsPerIssue, issueMetrics.closedIssuesCount);
   const averageCommentsPerPR = calculateAverage(prMetrics.totalCommentsPerPR, prMetrics.mergedPRsCount);
 
