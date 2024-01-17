@@ -1,6 +1,6 @@
 import { graphql } from '@octokit/graphql';
-
 import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
+import { handleException } from './error';
 
 interface RepositoryEdge {
   node: RepositoryNode;
@@ -24,11 +24,12 @@ interface OrganizationDataResponse {
 }
 
 export async function fetchOrganizationRepos(client: typeof graphql, org: string): Promise<RepositoryNode[]> {
-  let hasNextPage = true;
-  let cursor: string | null = null;
-  const allRepos = [];
+  try {
+    let hasNextPage = true;
+    let cursor: string | null = null;
+    const allRepos = [];
 
-  const query = `
+    const query = `
     query ($org: String!, $cursor: String) {
       organization(login: $org) {
         repositories(first: 10, after: $cursor) {
@@ -51,14 +52,18 @@ export async function fetchOrganizationRepos(client: typeof graphql, org: string
     }  
   `;
 
-  while (hasNextPage) {
-    const result: OrganizationDataResponse = await client(query, { org, cursor });
-    allRepos.push(...result.organization.repositories.edges.map(edge => edge.node));
-    hasNextPage = result.organization.repositories.pageInfo.hasNextPage;
-    cursor = result.organization.repositories.pageInfo.endCursor;
-  }
+    while (hasNextPage) {
+      const result: OrganizationDataResponse = await client(query, { org, cursor });
+      allRepos.push(...result.organization.repositories.edges.map(edge => edge.node));
+      hasNextPage = result.organization.repositories.pageInfo.hasNextPage;
+      cursor = result.organization.repositories.pageInfo.endCursor;
+    }
 
-  return allRepos;
+    return allRepos;
+  } catch (error) {
+    handleException(error, 'fetchOrganizationRepos');
+    return [];
+  }
 }
 
 
@@ -73,12 +78,13 @@ interface IssuePage {
 
 
 export async function fetchRepoIssues(client: typeof graphql, org: string, repoName: string, since: Date): Promise<IssueNode[]> {
-  let issues: IssueNode[] = [];
-  let endCursor = null;
-  let hasNextPage = true;
+  try {
+    let issues: IssueNode[] = [];
+    let endCursor = null;
+    let hasNextPage = true;
 
-  while (hasNextPage) {
-    const query = `
+    while (hasNextPage) {
+      const query = `
       query ($org: String!, $repoName: String!, $since: DateTime!, $cursor: String) {
         repository(owner: $org, name: $repoName) {
           issues(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
@@ -107,19 +113,24 @@ export async function fetchRepoIssues(client: typeof graphql, org: string, repoN
       }
     `;
 
-    const result: { repository: { issues: IssuePage } } = await client(query, {
-      repoName,
-      since: since.toISOString(),
-      org,
-      cursor: endCursor
-    });
+      const result: { repository: { issues: IssuePage } } = await client(query, {
+        repoName,
+        since: since.toISOString(),
+        org,
+        cursor: endCursor
+      });
 
-    issues = issues.concat(result.repository.issues.nodes);
-    endCursor = result.repository.issues.pageInfo.endCursor;
-    hasNextPage = result.repository.issues.pageInfo.hasNextPage;
+      issues = issues.concat(result.repository.issues.nodes);
+      endCursor = result.repository.issues.pageInfo.endCursor;
+      hasNextPage = result.repository.issues.pageInfo.hasNextPage;
+    }
+
+    return issues;
+
+  } catch (error) {
+    handleException(error, 'fetchRepoIssues');
+    return [];
   }
-
-  return issues;
 }
 
 
@@ -133,12 +144,13 @@ interface PullRequestPage {
 }
 
 export async function fetchRepoPullRequests(client: typeof graphql, org: string, repoName: string, since: Date): Promise<PullRequestNode[]> {
-  let pullRequests: PullRequestNode[] = [];
-  let endCursor = null;
-  let hasNextPage = true;
+  try {
+    let pullRequests: PullRequestNode[] = [];
+    let endCursor = null;
+    let hasNextPage = true;
 
-  while (hasNextPage) {
-    const query = `
+    while (hasNextPage) {
+      const query = `
       query ($org: String!, $repoName: String!, $cursor: String) {
         repository(owner: $org, name: $repoName) {
           pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
@@ -165,18 +177,23 @@ export async function fetchRepoPullRequests(client: typeof graphql, org: string,
       }
     `;
 
-    const result: { repository: { pullRequests: PullRequestPage } } = await client(query, {
-      repoName,
-      org,
-      cursor: endCursor,
-    });
+      const result: { repository: { pullRequests: PullRequestPage } } = await client(query, {
+        repoName,
+        org,
+        cursor: endCursor,
+      });
 
-    const filteredPRs = result.repository.pullRequests.nodes.filter(pr => new Date(pr.createdAt) >= since || new Date(pr.updatedAt) >= since);
-    pullRequests = pullRequests.concat(filteredPRs);
-    endCursor = result.repository.pullRequests.pageInfo.endCursor;
-    hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
+      const filteredPRs = result.repository.pullRequests.nodes.filter(pr => new Date(pr.createdAt) >= since || new Date(pr.updatedAt) >= since);
+      pullRequests = pullRequests.concat(filteredPRs);
+      endCursor = result.repository.pullRequests.pageInfo.endCursor;
+      hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
+    }
+
+    return pullRequests;
+
+  } catch (error) {
+    handleException(error, 'fetchRepoPullRequests');
+    return [];
   }
-
-  return pullRequests;
 }
 
