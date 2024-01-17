@@ -24,7 +24,7 @@ interface OrganizationDataResponse {
   };
 }
 
-export async function fetchOrganizationRepos(client: typeof graphql, org: string): Promise<RepositoryNode[] | void> {
+export async function fetchOrganizationRepos(client: typeof graphql, org: string, since: Date): Promise<RepositoryNode[] | void> {
   logger.info(`Fetching repos for ${org}`);
 
   try {
@@ -43,6 +43,7 @@ export async function fetchOrganizationRepos(client: typeof graphql, org: string
                 url
                 stargazerCount
                 forkCount
+                pushedAt
               }
               cursor
             }
@@ -62,7 +63,9 @@ export async function fetchOrganizationRepos(client: typeof graphql, org: string
       cursor = result.organization.repositories.pageInfo.endCursor;
     }
 
-    return allRepos;
+    const filteredByPushedAt = allRepos.filter(repo => new Date(repo.pushedAt) >= since);
+
+    return filteredByPushedAt;
   } catch (error) {
     handleException(error, 'fetchOrganizationRepos');
   }

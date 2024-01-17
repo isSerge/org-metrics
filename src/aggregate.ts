@@ -24,7 +24,6 @@ interface AggregatedData {
 export async function aggregateData(client: typeof graphql, org: string, repos: RepositoryNode[], since: Date): Promise<AggregatedData> {
   let totalStars = 0;
   let totalForks = 0;
-  const recentUpdatedRepos: RepositoryNode[] = [];
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
 
@@ -34,10 +33,6 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
 
     const issues = await fetchRepoIssues(client, org, repo.name, since);
     const pullRequests = await fetchRepoPullRequests(client, org, repo.name, since);
-
-    if (issues.length > 0 || pullRequests.length > 0) {
-      recentUpdatedRepos.push(repo);
-    }
 
     issueMetrics = processIssues(issues, issueMetrics);
     prMetrics = processPullRequests(pullRequests, prMetrics);
@@ -52,7 +47,7 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     totalStars,
     totalForks,
     repoCount: repos.length,
-    recentUpdatedRepos,
+    recentUpdatedRepos: repos,
     issues: {
       open: issueMetrics.openIssuesCount,
       closed: issueMetrics.closedIssuesCount,

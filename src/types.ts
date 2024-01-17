@@ -4,7 +4,7 @@ export interface RepositoryNode {
     url: string;
     stargazerCount: number;
     forkCount: number;
-    updatedAt: string;
+    pushedAt: string;
 }
 
 export interface IssueNode {
