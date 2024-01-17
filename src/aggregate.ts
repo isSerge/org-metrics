@@ -1,80 +1,11 @@
 import { graphql } from '@octokit/graphql';
-import { fetchRepoIssues, IssueNode } from "./issues";
-import { fetchRepoPullRequests, PullRequestNode } from "./pullRequests";
-
-interface RepositoryNode {
-  name: string;
-  description: string;
-  url: string;
-  stargazerCount: number;
-  forkCount: number;
-  updatedAt: string;
-}
-
-interface RepositoryEdge {
-  node: RepositoryNode;
-  cursor: string;
-}
-
-interface RepositoryPageInfo {
-  hasNextPage: boolean;
-  endCursor: string;
-}
-
-interface OrganizationRepositories {
-  edges: RepositoryEdge[];
-  pageInfo: RepositoryPageInfo;
-}
-
-interface OrganizationDataResponse {
-  organization: {
-    repositories: OrganizationRepositories;
-  };
-}
-
-export async function fetchOrganizationRepos(client: typeof graphql, org: string): Promise<RepositoryNode[]> {
-  let hasNextPage = true;
-  let cursor: string | null = null;
-  const allRepos = [];
-
-  const query = `
-    query ($org: String!, $cursor: String) {
-      organization(login: $org) {
-        repositories(first: 10, after: $cursor) {
-          edges {
-            node {
-              name
-              description
-              url
-              stargazerCount
-              forkCount
-            }
-            cursor
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }
-    }  
-  `;
-
-  while (hasNextPage) {
-    const result: OrganizationDataResponse = await client(query, { org, cursor });
-    allRepos.push(...result.organization.repositories.edges.map(edge => edge.node));
-    hasNextPage = result.organization.repositories.pageInfo.hasNextPage;
-    cursor = result.organization.repositories.pageInfo.endCursor;
-  }
-
-  return allRepos;
-}
+import { fetchRepoIssues, fetchRepoPullRequests } from "./github";
+import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
 
 export async function aggregateData(client: typeof graphql, org: string, repos: RepositoryNode[], since: Date) {
   let totalStars = 0;
   let totalForks = 0;
   const recentUpdatedRepos: RepositoryNode[] = [];
-
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
 
@@ -90,14 +21,13 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     }
 
     issueMetrics = processIssues(issues, issueMetrics);
-
     prMetrics = processPullRequests(pullRequests, prMetrics);
   }
 
-  const averageTimeToClose = calculateAverageTime(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount);
-  const averageTimeToMerge = calculateAverageTime(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount);
-  const averageCommentsPerIssue = calculateAverageComments(issueMetrics.totalCommentsPerIssue, issueMetrics.closedIssuesCount);
-  const averageCommentsPerPR = calculateAverageComments(prMetrics.totalCommentsPerPR, prMetrics.mergedPRsCount);
+  const averageTimeToClose = calculateAverage(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount);
+  const averageTimeToMerge = calculateAverage(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount);
+  const averageCommentsPerIssue = calculateAverage(issueMetrics.totalCommentsPerIssue, issueMetrics.closedIssuesCount);
+  const averageCommentsPerPR = calculateAverage(prMetrics.totalCommentsPerPR, prMetrics.mergedPRsCount);
 
   return {
     totalStars,
@@ -141,12 +71,8 @@ function getOpenAndMergedPrs(pullRequests: PullRequestNode[]) {
   }, [[], []]);
 }
 
-function calculateAverageTime(totalTime: number, count: number) {
-  return count === 0 ? 0 : totalTime / count;
-}
-
-function calculateAverageComments(totalComments: number, count: number) {
-  return count === 0 ? 0 : totalComments / count;
+function calculateAverage(metric: number, count: number) {
+  return count === 0 ? 0 : metric / count;
 }
 
 interface IssueMetrics {

@@ -1,11 +1,8 @@
 import { graphql } from '@octokit/graphql';
-// import { OpenAI } from "langchain/llms/openai";
 import { config } from 'dotenv';
-// import * as fsp from 'fs/promises';
 
-import { fetchOrganizationRepos, aggregateData } from "./github/github"
-// import { getContributionSummary } from "./langchain";
-// import { logger } from './logger';
+import { fetchOrganizationRepos } from "./github"
+import { aggregateData } from "./aggregate";
 import { handleException } from './error';
 
 config();
@@ -18,16 +15,6 @@ const graphqlClient = graphql.defaults({
   },
 });
 
-
-// const openAIApiKey = process.env.OPENAI_API_KEY;
-
-// const model = new OpenAI({
-//   openAIApiKey,
-//   temperature: 0.9,
-//   modelName: "gpt-3.5-turbo",
-//   // modelName: "gpt-4",
-// });
-
 const githubOrg = process.env.GITHUB_ORG_NAME as string;
 
 export async function main() {
@@ -38,8 +25,6 @@ export async function main() {
     const aggregated = await aggregateData(graphqlClient, githubOrg, data, oneWeekAgo);
 
     console.log(aggregated);
-    // await fsp.writeFile('data.json', JSON.stringify(data, null, 2));
-
   } catch (error) {
     handleException(error, 'main');
   }
