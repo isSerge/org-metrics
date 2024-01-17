@@ -80,6 +80,8 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
   let mergedPRsCount = 0;
   let totalTimeToMerge = 0;
   let totalTimeToClose = 0;
+  let totalCommentsPerIssue = 0;
+  let totalCommentsPerPR = 0;
 
   for (const repo of repos) {
     totalStars += repo.stargazerCount;
@@ -98,11 +100,12 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     openIssuesCount += open.length;
     closedIssuesCount += closed.length;
 
-    for (const { createdAt, closedAt } of closed) {
+    for (const { createdAt, closedAt, comments } of closed) {
       const created = new Date(createdAt);
       const closed = new Date(closedAt);
       const timeToClose = closed.getTime() - created.getTime();
       totalTimeToClose += timeToClose;
+      totalCommentsPerIssue += comments.totalCount;
     }
 
     const repoOpenPRs = pullRequests.filter(pr => pr.state === 'OPEN');
@@ -111,16 +114,20 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     openPRsCount += repoOpenPRs.length;
     mergedPRsCount += repoMergedPRs.length;
 
-    for (const { createdAt, mergedAt } of repoMergedPRs) {
+    for (const { createdAt, mergedAt, comments } of repoMergedPRs) {
       const created = new Date(createdAt);
       const merged = new Date(mergedAt);
       const timeToMerge = merged.getTime() - created.getTime();
       totalTimeToMerge += timeToMerge;
+      totalCommentsPerPR += comments.totalCount;
     }
   }
 
   const averageTimeToClose = totalTimeToClose === 0 ? 0 : totalTimeToClose / closedIssuesCount;
   const averageTimeToMerge = totalTimeToMerge === 0 ? 0 : totalTimeToMerge / mergedPRsCount;
+
+  const averageCommentsPerIssue = totalCommentsPerIssue === 0 ? 0 : totalCommentsPerIssue / closedIssuesCount;
+  const averageCommentsPerPR = totalCommentsPerPR === 0 ? 0 : totalCommentsPerPR / mergedPRsCount;
 
   return {
     totalStars,
@@ -131,11 +138,13 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
       open: openIssuesCount,
       closed: closedIssuesCount,
       averageTimeToClose,
+      averageCommentsPerIssue,
     },
     pullRequests: {
       open: openPRsCount,
       merged: mergedPRsCount,
       averageTimeToMerge,
+      averageCommentsPerPR,
     },
   };
 }
