@@ -9,7 +9,7 @@ interface IssuePage {
   };
 }
 
-interface IssueNode {
+export interface IssueNode {
   title: string;
   url: string;
   comments: {

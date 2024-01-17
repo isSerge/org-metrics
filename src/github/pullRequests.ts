@@ -9,7 +9,7 @@ interface PullRequestPage {
   };
 }
 
-interface PullRequestNode {
+export interface PullRequestNode {
   title: string;
   url: string;
   comments: {

@@ -1,6 +1,6 @@
 import { graphql } from '@octokit/graphql';
-import { fetchRepoIssues } from "./issues";
-import { fetchRepoPullRequests } from "./pullRequests";
+import { fetchRepoIssues, IssueNode } from "./issues";
+import { fetchRepoPullRequests, PullRequestNode } from "./pullRequests";
 
 interface RepositoryNode {
   name: string;
@@ -83,6 +83,34 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
   let totalCommentsPerIssue = 0;
   let totalCommentsPerPR = 0;
 
+  function processIssues(issues: IssueNode[]) {
+    const [open, closed] = getOpenAndClosedIssues(issues);
+    openIssuesCount += open.length;
+    closedIssuesCount += closed.length;
+
+    for (const { createdAt, closedAt, comments } of closed) {
+      const created = new Date(createdAt);
+      const closed = new Date(closedAt);
+      const timeToClose = closed.getTime() - created.getTime();
+      totalTimeToClose += timeToClose;
+      totalCommentsPerIssue += comments.totalCount;
+    }
+  }
+
+  function processPullRequests(pullRequests: PullRequestNode[]) {
+    const [open, merged] = getOpenAndMergedPrs(pullRequests);
+    openPRsCount += open.length;
+    mergedPRsCount += merged.length;
+
+    for (const { createdAt, mergedAt, comments } of merged) {
+      const created = new Date(createdAt);
+      const merged = new Date(mergedAt);
+      const timeToMerge = merged.getTime() - created.getTime();
+      totalTimeToMerge += timeToMerge;
+      totalCommentsPerPR += comments.totalCount;
+    }
+  }
+
   for (const repo of repos) {
     totalStars += repo.stargazerCount;
     totalForks += repo.forkCount;
@@ -94,33 +122,9 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
       recentUpdatedRepos.push(repo);
     }
 
-    const open = issues.filter(issue => issue.state === 'OPEN');
-    const closed = issues.filter(issue => issue.state === 'CLOSED');
+    processIssues(issues);
 
-    openIssuesCount += open.length;
-    closedIssuesCount += closed.length;
-
-    for (const { createdAt, closedAt, comments } of closed) {
-      const created = new Date(createdAt);
-      const closed = new Date(closedAt);
-      const timeToClose = closed.getTime() - created.getTime();
-      totalTimeToClose += timeToClose;
-      totalCommentsPerIssue += comments.totalCount;
-    }
-
-    const repoOpenPRs = pullRequests.filter(pr => pr.state === 'OPEN');
-    const repoMergedPRs = pullRequests.filter(pr => pr.state === 'MERGED');
-
-    openPRsCount += repoOpenPRs.length;
-    mergedPRsCount += repoMergedPRs.length;
-
-    for (const { createdAt, mergedAt, comments } of repoMergedPRs) {
-      const created = new Date(createdAt);
-      const merged = new Date(mergedAt);
-      const timeToMerge = merged.getTime() - created.getTime();
-      totalTimeToMerge += timeToMerge;
-      totalCommentsPerPR += comments.totalCount;
-    }
+    processPullRequests(pullRequests);
   }
 
   const averageTimeToClose = totalTimeToClose === 0 ? 0 : totalTimeToClose / closedIssuesCount;
@@ -147,4 +151,26 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
       averageCommentsPerPR,
     },
   };
+}
+
+function getOpenAndClosedIssues(issues: IssueNode[]) {
+  return issues.reduce((acc: [IssueNode[], IssueNode[]], issue) => {
+    if (issue.state === 'OPEN') {
+      acc[0].push(issue);
+    } else {
+      acc[1].push(issue);
+    }
+    return acc;
+  }, [[], []]);
+}
+
+function getOpenAndMergedPrs(pullRequests: PullRequestNode[]) {
+  return pullRequests.reduce((acc: [PullRequestNode[], PullRequestNode[]], pr) => {
+    if (pr.state === 'OPEN') {
+      acc[0].push(pr);
+    } else if (pr.state === 'MERGED') {
+      acc[1].push(pr);
+    }
+    return acc;
+  }, [[], []]);
 }
