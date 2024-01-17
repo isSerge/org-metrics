@@ -1,6 +1,7 @@
 import { graphql } from '@octokit/graphql';
 import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
 import { handleException } from './error';
+import { logger } from './logger';
 
 interface RepositoryEdge {
   node: RepositoryNode;
@@ -23,34 +24,36 @@ interface OrganizationDataResponse {
   };
 }
 
-export async function fetchOrganizationRepos(client: typeof graphql, org: string): Promise<RepositoryNode[]> {
+export async function fetchOrganizationRepos(client: typeof graphql, org: string): Promise<RepositoryNode[] | void> {
+  logger.info(`Fetching repos for ${org}`);
+
   try {
     let hasNextPage = true;
     let cursor: string | null = null;
     const allRepos = [];
 
     const query = `
-    query ($org: String!, $cursor: String) {
-      organization(login: $org) {
-        repositories(first: 10, after: $cursor) {
-          edges {
-            node {
-              name
-              description
-              url
-              stargazerCount
-              forkCount
+      query ($org: String!, $cursor: String) {
+        organization(login: $org) {
+          repositories(first: 10, after: $cursor) {
+            edges {
+              node {
+                name
+                description
+                url
+                stargazerCount
+                forkCount
+              }
+              cursor
             }
-            cursor
-          }
-          pageInfo {
-            hasNextPage
-            endCursor
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
           }
         }
-      }
-    }  
-  `;
+      }  
+    `;
 
     while (hasNextPage) {
       const result: OrganizationDataResponse = await client(query, { org, cursor });
@@ -62,10 +65,8 @@ export async function fetchOrganizationRepos(client: typeof graphql, org: string
     return allRepos;
   } catch (error) {
     handleException(error, 'fetchOrganizationRepos');
-    return [];
   }
 }
-
 
 interface IssuePage {
   totalCount: number;
@@ -76,8 +77,9 @@ interface IssuePage {
   };
 }
 
-
 export async function fetchRepoIssues(client: typeof graphql, org: string, repoName: string, since: Date): Promise<IssueNode[]> {
+  logger.info(`Fetching issues for ${repoName}`);
+
   try {
     let issues: IssueNode[] = [];
     let endCursor = null;
@@ -144,6 +146,8 @@ interface PullRequestPage {
 }
 
 export async function fetchRepoPullRequests(client: typeof graphql, org: string, repoName: string, since: Date): Promise<PullRequestNode[]> {
+  logger.info(`Fetching pull requests for ${repoName}`);
+
   try {
     let pullRequests: PullRequestNode[] = [];
     let endCursor = null;

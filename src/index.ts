@@ -22,6 +22,11 @@ export async function main() {
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   try {
     const data = await fetchOrganizationRepos(graphqlClient, githubOrg);
+
+    if (!data) {
+      throw new Error(`No data returned from fetchOrganizationRepos`);
+    }
+
     const aggregated = await aggregateData(graphqlClient, githubOrg, data, oneWeekAgo);
 
     console.log(aggregated);

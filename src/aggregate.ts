@@ -2,7 +2,26 @@ import { graphql } from '@octokit/graphql';
 import { fetchRepoIssues, fetchRepoPullRequests } from "./github";
 import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
 
-export async function aggregateData(client: typeof graphql, org: string, repos: RepositoryNode[], since: Date) {
+interface AggregatedData {
+  totalStars: number;
+  totalForks: number;
+  repoCount: number;
+  recentUpdatedRepos: RepositoryNode[];
+  issues: {
+    open: number;
+    closed: number;
+    averageTimeToClose: number;
+    averageCommentsPerIssue: number;
+  };
+  pullRequests: {
+    open: number;
+    merged: number;
+    averageTimeToMerge: number;
+    averageCommentsPerPR: number;
+  };
+}
+
+export async function aggregateData(client: typeof graphql, org: string, repos: RepositoryNode[], since: Date): Promise<AggregatedData> {
   let totalStars = 0;
   let totalForks = 0;
   const recentUpdatedRepos: RepositoryNode[] = [];
