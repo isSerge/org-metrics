@@ -74,42 +74,9 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
   let totalStars = 0;
   let totalForks = 0;
   const recentUpdatedRepos: RepositoryNode[] = [];
-  let openIssuesCount = 0;
-  let closedIssuesCount = 0;
-  let openPRsCount = 0;
-  let mergedPRsCount = 0;
-  let totalTimeToMerge = 0;
-  let totalTimeToClose = 0;
-  let totalCommentsPerIssue = 0;
-  let totalCommentsPerPR = 0;
 
-  function processIssues(issues: IssueNode[]) {
-    const [open, closed] = getOpenAndClosedIssues(issues);
-    openIssuesCount += open.length;
-    closedIssuesCount += closed.length;
-
-    for (const { createdAt, closedAt, comments } of closed) {
-      const created = new Date(createdAt);
-      const closed = new Date(closedAt);
-      const timeToClose = closed.getTime() - created.getTime();
-      totalTimeToClose += timeToClose;
-      totalCommentsPerIssue += comments.totalCount;
-    }
-  }
-
-  function processPullRequests(pullRequests: PullRequestNode[]) {
-    const [open, merged] = getOpenAndMergedPrs(pullRequests);
-    openPRsCount += open.length;
-    mergedPRsCount += merged.length;
-
-    for (const { createdAt, mergedAt, comments } of merged) {
-      const created = new Date(createdAt);
-      const merged = new Date(mergedAt);
-      const timeToMerge = merged.getTime() - created.getTime();
-      totalTimeToMerge += timeToMerge;
-      totalCommentsPerPR += comments.totalCount;
-    }
-  }
+  let issueMetrics = initializeIssueMetrics();
+  let prMetrics = initializePRMetrics();
 
   for (const repo of repos) {
     totalStars += repo.stargazerCount;
@@ -122,16 +89,15 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
       recentUpdatedRepos.push(repo);
     }
 
-    processIssues(issues);
+    issueMetrics = processIssues(issues, issueMetrics);
 
-    processPullRequests(pullRequests);
+    prMetrics = processPullRequests(pullRequests, prMetrics);
   }
 
-  const averageTimeToClose = totalTimeToClose === 0 ? 0 : totalTimeToClose / closedIssuesCount;
-  const averageTimeToMerge = totalTimeToMerge === 0 ? 0 : totalTimeToMerge / mergedPRsCount;
-
-  const averageCommentsPerIssue = totalCommentsPerIssue === 0 ? 0 : totalCommentsPerIssue / closedIssuesCount;
-  const averageCommentsPerPR = totalCommentsPerPR === 0 ? 0 : totalCommentsPerPR / mergedPRsCount;
+  const averageTimeToClose = calculateAverageTime(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount);
+  const averageTimeToMerge = calculateAverageTime(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount);
+  const averageCommentsPerIssue = calculateAverageComments(issueMetrics.totalCommentsPerIssue, issueMetrics.closedIssuesCount);
+  const averageCommentsPerPR = calculateAverageComments(prMetrics.totalCommentsPerPR, prMetrics.mergedPRsCount);
 
   return {
     totalStars,
@@ -139,14 +105,14 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     repoCount: repos.length,
     recentUpdatedRepos,
     issues: {
-      open: openIssuesCount,
-      closed: closedIssuesCount,
+      open: issueMetrics.openIssuesCount,
+      closed: issueMetrics.closedIssuesCount,
       averageTimeToClose,
       averageCommentsPerIssue,
     },
     pullRequests: {
-      open: openPRsCount,
-      merged: mergedPRsCount,
+      open: prMetrics.openPRsCount,
+      merged: prMetrics.mergedPRsCount,
       averageTimeToMerge,
       averageCommentsPerPR,
     },
@@ -173,4 +139,74 @@ function getOpenAndMergedPrs(pullRequests: PullRequestNode[]) {
     }
     return acc;
   }, [[], []]);
+}
+
+function calculateAverageTime(totalTime: number, count: number) {
+  return count === 0 ? 0 : totalTime / count;
+}
+
+function calculateAverageComments(totalComments: number, count: number) {
+  return count === 0 ? 0 : totalComments / count;
+}
+
+interface IssueMetrics {
+  openIssuesCount: number;
+  closedIssuesCount: number;
+  totalTimeToClose: number;
+  totalCommentsPerIssue: number;
+}
+
+function initializeIssueMetrics(): IssueMetrics {
+  return {
+    openIssuesCount: 0,
+    closedIssuesCount: 0,
+    totalTimeToClose: 0,
+    totalCommentsPerIssue: 0,
+  };
+}
+
+interface PRMetrics {
+  openPRsCount: number;
+  mergedPRsCount: number;
+  totalTimeToMerge: number;
+  totalCommentsPerPR: number;
+}
+
+function initializePRMetrics(): PRMetrics {
+  return {
+    openPRsCount: 0,
+    mergedPRsCount: 0,
+    totalTimeToMerge: 0,
+    totalCommentsPerPR: 0,
+  };
+}
+
+function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
+  const [open, closed] = getOpenAndClosedIssues(issues);
+  metrics.openIssuesCount += open.length;
+  metrics.closedIssuesCount += closed.length;
+
+  for (const issue of closed) {
+    const created = new Date(issue.createdAt);
+    const closed = new Date(issue.closedAt);
+    metrics.totalTimeToClose += closed.getTime() - created.getTime();
+    metrics.totalCommentsPerIssue += issue.comments.totalCount;
+  }
+
+  return metrics;
+}
+
+function processPullRequests(pullRequests: PullRequestNode[], metrics: PRMetrics) {
+  const [open, merged] = getOpenAndMergedPrs(pullRequests);
+  metrics.openPRsCount += open.length;
+  metrics.mergedPRsCount += merged.length;
+
+  for (const pr of merged) {
+    const created = new Date(pr.createdAt);
+    const merged = new Date(pr.mergedAt);
+    metrics.totalTimeToMerge += merged.getTime() - created.getTime();
+    metrics.totalCommentsPerPR += pr.comments.totalCount;
+  }
+
+  return metrics;
 }
