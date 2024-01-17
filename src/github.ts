@@ -177,6 +177,11 @@ export async function fetchRepoPullRequests(client: typeof graphql, org: string,
               state
               closedAt
               updatedAt
+              participants(first: 100) {
+                nodes {
+                  login
+                }
+              }
             }
             pageInfo {
               endCursor

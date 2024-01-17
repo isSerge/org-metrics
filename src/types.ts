@@ -36,4 +36,9 @@ export interface PullRequestNode {
     state: string;
     closedAt: string;
     updatedAt: string;
+    participants: {
+        nodes: {
+            login: string;
+        }[];
+    }
 }
