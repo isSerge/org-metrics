@@ -34,7 +34,7 @@ export async function fetchRepoIssues(client: typeof graphql, org: string, repoN
     const query = `
       query ($org: String!, $repoName: String!, $since: DateTime!, $cursor: String) {
         repository(owner: $org, name: $repoName) {
-          issues(first: 100, after: $cursor, states: OPEN, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
+          issues(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
             totalCount
             nodes {
               title

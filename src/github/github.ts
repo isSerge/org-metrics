@@ -1,5 +1,6 @@
 import { graphql } from '@octokit/graphql';
 import { fetchRepoIssues } from "./issues";
+import { fetchRepoPullRequests } from "./pullRequests";
 
 interface RepositoryNode {
   name: string;
@@ -73,20 +74,33 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
   let totalStars = 0;
   let totalForks = 0;
   const recentUpdatedRepos: RepositoryNode[] = [];
-  const openIssues = [];
-  const closedIssues = [];
+  let openIssuesCount = 0;
+  let closedIssuesCount = 0;
+  let openPRsCount = 0;
+  let mergedPRsCount = 0;
 
   for (const repo of repos) {
     totalStars += repo.stargazerCount;
     totalForks += repo.forkCount;
 
     const issues = await fetchRepoIssues(client, org, repo.name, since);
+    const pullRequests = await fetchRepoPullRequests(client, org, repo.name, since);
+
+    if (issues.length > 0 || pullRequests.length > 0) {
+      recentUpdatedRepos.push(repo);
+    }
 
     const open = issues.filter(issue => issue.state === 'OPEN');
     const closed = issues.filter(issue => issue.state === 'CLOSED');
 
-    openIssues.push(...open);
-    closedIssues.push(...closed);
+    openIssuesCount += open.length;
+    closedIssuesCount += closed.length;
+
+    const repoOpenPRs = pullRequests.filter(pr => pr.state === 'OPEN');
+    const repoMergedPRs = pullRequests.filter(pr => pr.state === 'MERGED');
+
+    openPRsCount += repoOpenPRs.length;
+    mergedPRsCount += repoMergedPRs.length;
   }
 
   return {
@@ -95,8 +109,12 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
     repoCount: repos.length,
     recentUpdatedRepos,
     issues: {
-      open: openIssues.length,
-      closed: closedIssues.length,
-    }
+      open: openIssuesCount,
+      closed: closedIssuesCount,
+    },
+    pullRequests: {
+      open: openPRsCount,
+      merged: mergedPRsCount,
+    },
   };
 }

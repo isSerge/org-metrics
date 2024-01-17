@@ -3,7 +3,7 @@ import { graphql } from '@octokit/graphql';
 import { config } from 'dotenv';
 // import * as fsp from 'fs/promises';
 
-import { fetchOrganizationRepos, aggregateData } from "./github"
+import { fetchOrganizationRepos, aggregateData } from "./github/github"
 // import { getContributionSummary } from "./langchain";
 // import { logger } from './logger';
 import { handleException } from './error';
