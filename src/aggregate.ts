@@ -21,13 +21,13 @@ interface AggregatedData {
   };
 }
 
-export async function aggregateData(client: typeof graphql, org: string, repos: RepositoryNode[], since: Date): Promise<AggregatedData> {
+export async function aggregateData(client: typeof graphql, org: string, reposData: { activeRepos: RepositoryNode[]; totalRepos: number; }, since: Date): Promise<AggregatedData> {
   let totalStars = 0;
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
 
-  for (const repo of repos) {
+  for (const repo of reposData.activeRepos) {
     totalStars += repo.stargazerCount;
     totalForks += repo.forkCount;
 
@@ -46,8 +46,8 @@ export async function aggregateData(client: typeof graphql, org: string, repos: 
   return {
     totalStars,
     totalForks,
-    repoCount: repos.length,
-    recentUpdatedRepos: repos,
+    repoCount: reposData.totalRepos,
+    recentUpdatedRepos: reposData.activeRepos,
     issues: {
       open: issueMetrics.openIssuesCount,
       closed: issueMetrics.closedIssuesCount,

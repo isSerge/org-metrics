@@ -24,7 +24,7 @@ interface OrganizationDataResponse {
   };
 }
 
-export async function fetchOrganizationRepos(client: typeof graphql, org: string, since: Date): Promise<RepositoryNode[] | void> {
+export async function fetchOrganizationRepos(client: typeof graphql, org: string, since: Date): Promise<{ totalRepos: number, activeRepos: RepositoryNode[] } | void> {
   logger.info(`Fetching repos for ${org}`);
 
   try {
@@ -65,7 +65,10 @@ export async function fetchOrganizationRepos(client: typeof graphql, org: string
 
     const filteredByPushedAt = allRepos.filter(repo => new Date(repo.pushedAt) >= since);
 
-    return filteredByPushedAt;
+    return {
+      totalRepos: allRepos.length,
+      activeRepos: filteredByPushedAt,
+    };
   } catch (error) {
     handleException(error, 'fetchOrganizationRepos');
   }
