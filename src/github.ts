@@ -180,6 +180,7 @@ export async function fetchRepoPullRequests(client: typeof graphql, org: string,
               participants(first: 100) {
                 nodes {
                   login
+                  location
                 }
               }
             }

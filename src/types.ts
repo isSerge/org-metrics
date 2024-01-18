@@ -39,6 +39,7 @@ export interface PullRequestNode {
     participants: {
         nodes: {
             login: string;
+            location: string;
         }[];
     }
 }

@@ -22,7 +22,10 @@ interface AggregatedData {
     merged: number;
     averageTimeToMerge: number;
     averageCommentsPerPR: number;
-    uniqueParticipants: string[];
+  };
+  collaborators: {
+    locations: Map<string, number>;
+    uniqueParticipants: Set<string>;
     uniqueParticipantCount: number;
   };
 }
@@ -32,7 +35,8 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
-  const uniqueParticipants: string[] = [];
+  const uniqueParticipants = new Set<string>();
+  const locations = new Map<string, number>();
 
   for (const repo of reposData.activeRepos) {
     totalStars += repo.stargazerCount;
@@ -45,9 +49,10 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
     prMetrics = processPullRequests(pullRequests, prMetrics);
 
     for (const { participants } of pullRequests) {
-      for (const { login } of participants.nodes) {
-        if (!uniqueParticipants.includes(login)) {
-          uniqueParticipants.push(login);
+      for (const { login, location } of participants.nodes) {
+        if (!uniqueParticipants.has(login)) {
+          uniqueParticipants.add(login);
+          locations.set(location, (locations.get(location) || 0) + 1);
         }
       }
     }
@@ -74,9 +79,12 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
       merged: prMetrics.mergedPRsCount,
       averageTimeToMerge,
       averageCommentsPerPR,
-      uniqueParticipants,
-      uniqueParticipantCount: uniqueParticipants.length,
     },
+    collaborators: {
+      locations,
+      uniqueParticipants,
+      uniqueParticipantCount: uniqueParticipants.size,
+    }
   };
 }
 
