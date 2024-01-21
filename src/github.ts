@@ -24,6 +24,13 @@ interface OrganizationDataResponse {
   };
 }
 
+/**
+ * Fetches all repositories for an organization
+ * @param client - Octokit graphql client
+ * @param org - Organization name
+ * @param since - Start date for filtering till now
+ * @returns - Total number of repositories and active repositories for a given period
+ */
 export async function fetchOrganizationRepos(client: typeof graphql, org: string, since: Date): Promise<{ totalRepos: number, activeRepos: RepositoryNode[] } | void> {
   logger.info(`Fetching repos for ${org}`);
 
@@ -83,6 +90,14 @@ interface IssuePage {
   };
 }
 
+/**
+ * Fetches all issues for a repository since a given date till now
+ * @param client - Octokit graphql client
+ * @param org - Organization name
+ * @param repoName - Repository name
+ * @param since - Start date for filtering till now
+ * @returns - All issues for a repository since a given date till now
+ */
 export async function fetchRepoIssues(client: typeof graphql, org: string, repoName: string, since: Date): Promise<IssueNode[]> {
   logger.info(`Fetching issues for ${repoName}`);
 
@@ -151,6 +166,14 @@ interface PullRequestPage {
   };
 }
 
+/**
+ * Fetches all pull requests for a repository since a given date till now
+ * @param client - Octokit graphql client
+ * @param org - Organization name
+ * @param repoName - Repository name
+ * @param since - Start date for filtering till now
+ * @returns - All pull requests for a repository since a given date till now
+ */
 export async function fetchRepoPullRequests(client: typeof graphql, org: string, repoName: string, since: Date): Promise<PullRequestNode[]> {
   logger.info(`Fetching pull requests for ${repoName}`);
 
