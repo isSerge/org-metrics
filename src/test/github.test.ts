@@ -121,6 +121,26 @@ it('fetchOrganizationRepos should handle pagination correctly', async () => {
   assert.equal(callCount, 2);
 });
 
+it('fetchOrganizationRepos should throw error if graphql client throws', async () => {
+  const mockClient = async () => {
+    throw new Error('Test error');
+  };
+
+  const githubOrg = new GithubOrg({
+    client: mockClient as unknown as typeof graphql,
+    org: 'testOrg',
+    since,
+    logger: silentLogger,
+  });
+
+  try {
+    await githubOrg.fetchOrganizationRepos();
+    assert.fail('Expected method to throw an error');
+  } catch (error) {
+    assert.ok(error);
+  }
+});
+
 it('fetchRepoIssues should return a list of issues', async () => {
   const mockIssues = [mockIssue];
 
@@ -154,6 +174,26 @@ it('fetchRepoIssues should throw error if response validation fails', async () =
     return {
       incorrectResponseObject: {}
     }
+  };
+
+  const githubOrg = new GithubOrg({
+    client: mockClient as unknown as typeof graphql,
+    org: 'testOrg',
+    since,
+    logger: silentLogger,
+  });
+
+  try {
+    await githubOrg.fetchRepoIssues('Repo1');
+    assert.fail('Expected method to throw an error');
+  } catch (error) {
+    assert.ok(error);
+  }
+});
+
+it('fetchRepoIssues should throw error if graphql client throws', async () => {
+  const mockClient = async () => {
+    throw new Error('Test error');
   };
 
   const githubOrg = new GithubOrg({
