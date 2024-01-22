@@ -1,5 +1,4 @@
-import { graphql } from '@octokit/graphql';
-import { fetchRepoIssues, fetchRepoPullRequests } from "./github";
+import { GithubOrg } from "./github";
 import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
 
 interface IssueMetrics {
@@ -105,7 +104,7 @@ interface ContributionData {
  * @param since - Date since which data is to be fetched
  * @returns - Aggregated data
  */
-export async function aggregateData(client: typeof graphql, org: string, reposData: { activeRepos: RepositoryNode[]; totalRepos: number; }, since: Date): Promise<AggregatedData> {
+export async function aggregateData(githubOrgApi: GithubOrg, reposData: { activeRepos: RepositoryNode[]; totalRepos: number; }): Promise<AggregatedData> {
   let totalStars = 0;
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
@@ -117,8 +116,8 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
     totalStars += repo.stargazerCount;
     totalForks += repo.forkCount;
 
-    const issues = await fetchRepoIssues(client, org, repo.name, since);
-    const pullRequests = await fetchRepoPullRequests(client, org, repo.name, since);
+    const issues = await githubOrgApi.fetchRepoIssues(repo.name);
+    const pullRequests = await githubOrgApi.fetchRepoPullRequests(repo.name);
 
     issueMetrics = processIssues(issues, issueMetrics);
     prMetrics = processPullRequests(pullRequests, prMetrics);

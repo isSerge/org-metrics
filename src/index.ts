@@ -1,7 +1,7 @@
 import { graphql } from '@octokit/graphql';
 import { config } from 'dotenv';
 
-import { fetchOrganizationRepos } from "./github"
+import { GithubOrg } from "./github"
 import { aggregateData } from "./aggregate";
 import { handleException } from './error';
 
@@ -21,13 +21,14 @@ export async function main() {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   try {
-    const data = await fetchOrganizationRepos(graphqlClient, githubOrg, oneWeekAgo);
+    const githubOrgApi = new GithubOrg(graphqlClient, githubOrg, oneWeekAgo);
+    const data = await githubOrgApi.fetchOrganizationRepos();
 
     if (!data) {
       throw new Error(`No data returned from fetchOrganizationRepos`);
     }
 
-    const aggregated = await aggregateData(graphqlClient, githubOrg, data, oneWeekAgo);
+    const aggregated = await aggregateData(githubOrgApi, data);
 
     console.dir(aggregated.collaborators.uniqueParticipants, { depth: null });
   } catch (error) {
