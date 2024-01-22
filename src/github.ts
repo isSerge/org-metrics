@@ -12,10 +12,16 @@ import {
 import { handleException } from './error';
 import { logger } from './logger';
 
+/**
+ * GithubOrg class
+ * @param client - Github graphql client
+ * @param org - Github organization name
+ * @param since - Date since when the data should be fetched
+*/
 export class GithubOrg {
-  client: typeof graphql;
-  org: string;
-  since: Date;
+  private readonly client: typeof graphql;
+  private readonly org: string;
+  private readonly since: Date;
 
   constructor(client: typeof graphql, org: string, since: Date) {
     // Validate inputs
