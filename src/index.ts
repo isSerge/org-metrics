@@ -4,6 +4,7 @@ import { config } from 'dotenv';
 import { GithubOrg } from "./github"
 import { aggregateData } from "./aggregate";
 import { handleException } from './error';
+import { logger } from './logger';
 
 config();
 
@@ -21,7 +22,13 @@ export async function main() {
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
   try {
-    const githubOrgApi = new GithubOrg(graphqlClient, githubOrg, oneWeekAgo);
+    const githubOrgApi = new GithubOrg({
+      client: graphqlClient,
+      org: githubOrg,
+      since: oneWeekAgo,
+      logger,
+    });
+
     const data = await githubOrgApi.fetchOrganizationRepos();
 
     if (!data) {
@@ -32,7 +39,7 @@ export async function main() {
 
     console.dir(aggregated.collaborators.uniqueParticipants, { depth: null });
   } catch (error) {
-    handleException(error, 'main');
+    handleException(logger, error, 'main');
   }
 }
 

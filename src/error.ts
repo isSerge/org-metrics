@@ -1,6 +1,6 @@
-import { logger } from './logger';
+import { Logger } from 'pino';
 
-export function handleException(error: unknown, location: string) {
+export function handleException(logger: Logger, error: unknown, location: string) {
   let errorMessage: string;
 
   if (error instanceof Error) {

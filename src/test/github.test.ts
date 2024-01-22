@@ -1,7 +1,8 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { GithubOrg } from '../github';
 import { graphql } from '@octokit/graphql';
+import pino from 'pino';
+import { GithubOrg } from '../github';
 
 const since = new Date();
 
@@ -19,6 +20,10 @@ const mockRepo = {
   cursor: 'cursor1',
 }
 
+const silentLogger = pino({
+  level: 'silent'
+});
+
 it('fetchOrganizationRepos should return a list of repositories', async () => {
   const mockRepos = [mockRepo];
 
@@ -33,7 +38,12 @@ it('fetchOrganizationRepos should return a list of repositories', async () => {
     }
   };
 
-  const githubOrg = new GithubOrg(mockClient as unknown as typeof graphql, 'testOrg', since);
+  const githubOrg = new GithubOrg({
+    client: mockClient as unknown as typeof graphql,
+    org: 'testOrg',
+    since,
+    logger: silentLogger,
+  });
   const result = await githubOrg.fetchOrganizationRepos();
 
   assert.ok(result);
@@ -48,7 +58,12 @@ it('fetchOrganizationRepos should throw error if response validation fails', asy
     }
   };
 
-  const githubOrg = new GithubOrg(mockClient as unknown as typeof graphql, 'testOrg', since);
+  const githubOrg = new GithubOrg({
+    client: mockClient as unknown as typeof graphql,
+    org: 'testOrg',
+    since,
+    logger: silentLogger,
+  });
 
   try {
     await githubOrg.fetchOrganizationRepos();
@@ -81,7 +96,13 @@ it('fetchOrganizationRepos should handle pagination correctly', async () => {
     };
   };
 
-  const githubOrg = new GithubOrg(mockClient as unknown as typeof graphql, 'testOrg', since);
+  const githubOrg = new GithubOrg({
+    client: mockClient as unknown as typeof graphql,
+    org: 'testOrg',
+    since,
+    logger: silentLogger,
+  });
+
   const result = await githubOrg.fetchOrganizationRepos();
 
   assert.ok(result);

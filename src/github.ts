@@ -1,4 +1,5 @@
 import { graphql } from '@octokit/graphql';
+import { Logger } from "pino";
 import {
   RepositoryNode,
   IssueNode,
@@ -10,7 +11,6 @@ import {
   repositoryIssuesSchema
 } from "./types";
 import { handleException } from './error';
-import { logger } from './logger';
 
 const queries = {
   fetchOrganizationRepos: `
@@ -102,6 +102,13 @@ const queries = {
   `,
 };
 
+interface GithubOrgApiDependencies {
+  client: typeof graphql;
+  org: string;
+  since: Date;
+  logger: Logger;
+}
+
 /**
  * GithubOrg class
  * @param client - Github graphql client
@@ -112,8 +119,9 @@ export class GithubOrg {
   private readonly client: typeof graphql;
   private readonly org: string;
   private readonly since: Date;
+  private readonly logger: Logger;
 
-  constructor(client: typeof graphql, org: string, since: Date) {
+  constructor({ client, org, since, logger }: GithubOrgApiDependencies) {
     // Validate inputs
     stringSchema.parse(org);
     dateSchema.parse(since);
@@ -121,6 +129,7 @@ export class GithubOrg {
     this.client = client;
     this.org = org;
     this.since = since;
+    this.logger = logger;
   }
 
   /**
@@ -128,7 +137,7 @@ export class GithubOrg {
    * @returns - Total number of repositories and active repositories for a given period
   */
   public async fetchOrganizationRepos(): Promise<{ totalRepos: number, activeRepos: RepositoryNode[] } | void> {
-    logger.info(`Fetching repos for organization: ${this.org}`);
+    this.logger.info(`Fetching repos for organization: ${this.org}`);
 
     try {
       let hasNextPage = true;
@@ -146,14 +155,14 @@ export class GithubOrg {
 
       const filteredByPushedAt = allRepos.filter(repo => new Date(repo.pushedAt) >= this.since);
 
-      logger.info(`Fetched repos: ${filteredByPushedAt.length}`);
+      this.logger.info(`Fetched repos: ${filteredByPushedAt.length}`);
 
       return {
         totalRepos: allRepos.length,
         activeRepos: filteredByPushedAt,
       };
     } catch (error) {
-      handleException(error, 'fetchOrganizationRepos');
+      handleException(this.logger, error, 'fetchOrganizationRepos');
     }
   }
 
@@ -166,7 +175,7 @@ export class GithubOrg {
     // Validate inputs
     stringSchema.parse(repoName);
 
-    logger.info(`Fetching issues for repo: ${repoName}`);
+    this.logger.info(`Fetching issues for repo: ${repoName}`);
 
     try {
       let issues: IssueNode[] = [];
@@ -189,11 +198,11 @@ export class GithubOrg {
         hasNextPage = result.repository.issues.pageInfo.hasNextPage;
       }
 
-      logger.info(`Fetched issues: ${issues.length}`);
+      this.logger.info(`Fetched issues: ${issues.length}`);
 
       return issues;
     } catch (error) {
-      handleException(error, 'fetchRepoIssues');
+      handleException(this.logger, error, 'fetchRepoIssues');
       return [];
     }
   }
@@ -207,7 +216,7 @@ export class GithubOrg {
     // Validate inputs
     stringSchema.parse(repoName);
 
-    logger.info(`Fetching pull requests for repo: ${repoName}`);
+    this.logger.info(`Fetching pull requests for repo: ${repoName}`);
 
     try {
       let pullRequests: PullRequestNode[] = [];
@@ -230,11 +239,11 @@ export class GithubOrg {
         hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
       }
 
-      logger.info(`Fetched pull requests: ${pullRequests.length}`);
+      this.logger.info(`Fetched pull requests: ${pullRequests.length}`);
 
       return pullRequests;
     } catch (error) {
-      handleException(error, 'fetchRepoPullRequests');
+      handleException(this.logger, error, 'fetchRepoPullRequests');
       return [];
     }
   }
