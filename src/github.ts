@@ -206,6 +206,10 @@ export async function fetchRepoPullRequests(client: typeof graphql, org: string,
                   location
                 }
               }
+              author {
+                login
+              }
+              merged
             }
             pageInfo {
               endCursor

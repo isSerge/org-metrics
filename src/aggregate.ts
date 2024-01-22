@@ -83,9 +83,18 @@ interface AggregatedData {
   };
   collaborators: {
     locations: Map<string, number>;
-    uniqueParticipants: Set<string>;
+    uniqueParticipants: Map<string, ContributionData>;
     uniqueParticipantCount: number;
   };
+}
+
+interface ContributionData {
+  pullRequestsOpened: number;
+  pullRequestsMerged: number;
+  pullRequestComments: number;
+  // issuesCreated: number;
+  // issuesComments: number;
+  // issuesClosed: number;
 }
 
 /**
@@ -101,7 +110,7 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
-  const uniqueParticipants = new Set<string>();
+  const uniqueParticipants = new Map<string, ContributionData>();
   const locations = new Map<string, number>();
 
   for (const repo of reposData.activeRepos) {
@@ -114,14 +123,63 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
     issueMetrics = processIssues(issues, issueMetrics);
     prMetrics = processPullRequests(pullRequests, prMetrics);
 
-    for (const { participants } of pullRequests) {
+    for (const { participants, author, merged } of pullRequests) {
       for (const { login, location } of participants.nodes) {
         if (!uniqueParticipants.has(login)) {
-          uniqueParticipants.add(login);
           locations.set(location, (locations.get(location) || 0) + 1);
+          uniqueParticipants.set(login, {
+            pullRequestsOpened: 0,
+            pullRequestsMerged: 0,
+            pullRequestComments: 0,
+            // issuesCreated: 0,
+            // issuesComments: 0,
+            // issuesClosed: 0,
+          });
+        }
+
+        const contributionData = uniqueParticipants.get(login);
+
+        if (contributionData) {
+          if (author.login === login) {
+            contributionData.pullRequestsOpened++; // Increment if the participant is the author
+            if (merged) {
+              contributionData.pullRequestsMerged++; // Increment if the participant is the author and the PR is merged
+            }
+          } else {
+            contributionData.pullRequestComments++; // Increment for non-authors who comment
+          }
         }
       }
     }
+
+    // for (const { participants, author, closed } of issues) {
+    //   for (const { login, location } of participants.nodes) {
+    //     if (!uniqueParticipants.has(login)) {
+    //       locations.set(location, (locations.get(location) || 0) + 1);
+    //       uniqueParticipants.set(login, {
+    //         pullRequestsOpened: 0,
+    //         pullRequestsMerged: 0,
+    //         pullRequestComments: 0,
+    //         issuesCreated: 0,
+    //         issuesComments: 0,
+    //         issuesClosed: 0,
+    //       });
+    //     }
+
+    //     const contributionData = uniqueParticipants.get(login);
+
+    //     if (contributionData) {
+    //       if (author.login === login) {
+    //         contributionData.issuesCreated++; // Increment only if the participant is the author
+    //         if (closed) {
+    //           contributionData.issuesClosed++;
+    //         }
+    //       } else {
+    //         contributionData.issuesComments++; // Increment for non-authors who comment
+    //       }
+    //     }
+    //   }
+    // }
   }
 
   const averageTimeToClose = millisecondsToDays(calculateAverage(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount));

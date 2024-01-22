@@ -41,5 +41,9 @@ export interface PullRequestNode {
             login: string;
             location: string;
         }[];
-    }
+    };
+    author: {
+        login: string;
+    };
+    merged: boolean;
 }

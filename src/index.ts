@@ -29,7 +29,7 @@ export async function main() {
 
     const aggregated = await aggregateData(graphqlClient, githubOrg, data, oneWeekAgo);
 
-    console.log(aggregated);
+    console.dir(aggregated.collaborators.uniqueParticipants, { depth: null });
   } catch (error) {
     handleException(error, 'main');
   }
