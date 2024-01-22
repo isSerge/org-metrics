@@ -12,6 +12,96 @@ import {
 import { handleException } from './error';
 import { logger } from './logger';
 
+const queries = {
+  fetchOrganizationRepos: `
+    query ($org: String!, $cursor: String) {
+      organization(login: $org) {
+        repositories(first: 10, after: $cursor) {
+          edges {
+            node {
+              name
+              description
+              url
+              stargazerCount
+              forkCount
+              pushedAt
+            }
+            cursor
+          }
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+        }
+      }
+    }  
+  `,
+  fetchRepoIssues: `
+    query ($org: String!, $repoName: String!, $since: DateTime!, $cursor: String) {
+      repository(owner: $org, name: $repoName) {
+        issues(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
+          totalCount
+          nodes {
+            title
+            url
+            comments {
+              totalCount
+            }
+            createdAt
+            labels {
+              totalCount
+            }
+            number
+            state
+            closedAt
+            updatedAt
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+        }
+      }
+    }
+  `,
+  fetchRepoPullRequests: `
+    query ($org: String!, $repoName: String!, $cursor: String) {
+      repository(owner: $org, name: $repoName) {
+        pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
+          totalCount
+          nodes {
+            title
+            url
+            comments {
+              totalCount
+            }
+            createdAt
+            mergedAt
+            number
+            state
+            closedAt
+            updatedAt
+            participants(first: 100) {
+              nodes {
+                login
+                location
+              }
+            }
+            author {
+              login
+            }
+            merged
+          }
+          pageInfo {
+            endCursor
+            hasNextPage
+          }
+        }
+      }
+    }
+  `,
+};
+
 /**
  * GithubOrg class
  * @param client - Github graphql client
@@ -45,32 +135,8 @@ export class GithubOrg {
       let cursor: string | null = null;
       const allRepos = [];
 
-      const query = `
-        query ($org: String!, $cursor: String) {
-          organization(login: $org) {
-            repositories(first: 10, after: $cursor) {
-              edges {
-                node {
-                  name
-                  description
-                  url
-                  stargazerCount
-                  forkCount
-                  pushedAt
-                }
-                cursor
-              }
-              pageInfo {
-                hasNextPage
-                endCursor
-              }
-            }
-          }
-        }  
-      `;
-
       while (hasNextPage) {
-        const rawResult = await this.client(query, { org: this.org, cursor });
+        const rawResult = await this.client(queries.fetchOrganizationRepos, { org: this.org, cursor });
         // Validate the raw response
         const result = organizationSchema.parse(rawResult);
         allRepos.push(...result.organization.repositories.edges.map(edge => edge.node));
@@ -108,36 +174,7 @@ export class GithubOrg {
       let hasNextPage = true;
 
       while (hasNextPage) {
-        const query = `
-          query ($org: String!, $repoName: String!, $since: DateTime!, $cursor: String) {
-            repository(owner: $org, name: $repoName) {
-              issues(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
-                totalCount
-                nodes {
-                  title
-                  url
-                  comments {
-                    totalCount
-                  }
-                  createdAt
-                  labels {
-                    totalCount
-                  }
-                  number
-                  state
-                  closedAt
-                  updatedAt
-                }
-                pageInfo {
-                  endCursor
-                  hasNextPage
-                }
-              }
-            }
-          }
-        `;
-
-        const rawResult = await this.client(query, {
+        const rawResult = await this.client(queries.fetchRepoIssues, {
           repoName,
           since: this.since.toISOString(),
           org: this.org,
@@ -178,44 +215,7 @@ export class GithubOrg {
       let hasNextPage = true;
 
       while (hasNextPage) {
-        const query = `
-          query ($org: String!, $repoName: String!, $cursor: String) {
-            repository(owner: $org, name: $repoName) {
-              pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
-                totalCount
-                nodes {
-                  title
-                  url
-                  comments {
-                    totalCount
-                  }
-                  createdAt
-                  mergedAt
-                  number
-                  state
-                  closedAt
-                  updatedAt
-                  participants(first: 100) {
-                    nodes {
-                      login
-                      location
-                    }
-                  }
-                  author {
-                    login
-                  }
-                  merged
-                }
-                pageInfo {
-                  endCursor
-                  hasNextPage
-                }
-              }
-            }
-          }
-        `;
-
-        const rawResult = await this.client(query, {
+        const rawResult = await this.client(queries.fetchRepoPullRequests, {
           repoName,
           org: this.org,
           cursor: endCursor,
