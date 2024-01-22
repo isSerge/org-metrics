@@ -32,7 +32,7 @@ export class GithubOrg {
    * @returns - Total number of repositories and active repositories for a given period
   */
   public async fetchOrganizationRepos(): Promise<{ totalRepos: number, activeRepos: RepositoryNode[] } | void> {
-    logger.info(`Fetching repos for ${this.org}`);
+    logger.info(`Fetching repos for organization: ${this.org}`);
 
     try {
       let hasNextPage = true;
@@ -74,7 +74,7 @@ export class GithubOrg {
 
       const filteredByPushedAt = allRepos.filter(repo => new Date(repo.pushedAt) >= this.since);
 
-      logger.info(`Fetched ${filteredByPushedAt.length} repos for ${this.org}`);
+      logger.info(`Fetched repos: ${filteredByPushedAt.length}`);
 
       return {
         totalRepos: allRepos.length,
@@ -94,7 +94,7 @@ export class GithubOrg {
     // Validate inputs
     stringSchema.parse(repoName);
 
-    logger.info(`Fetching issues for ${repoName}`);
+    logger.info(`Fetching issues for repo: ${repoName}`);
 
     try {
       let issues: IssueNode[] = [];
@@ -146,7 +146,7 @@ export class GithubOrg {
         hasNextPage = result.repository.issues.pageInfo.hasNextPage;
       }
 
-      logger.info(`Fetched ${issues.length} issues for ${repoName}`);
+      logger.info(`Fetched issues: ${issues.length}`);
 
       return issues;
     } catch (error) {
@@ -164,7 +164,7 @@ export class GithubOrg {
     // Validate inputs
     stringSchema.parse(repoName);
 
-    logger.info(`Fetching pull requests for ${repoName}`);
+    logger.info(`Fetching pull requests for repo: ${repoName}`);
 
     try {
       let pullRequests: PullRequestNode[] = [];
@@ -224,7 +224,7 @@ export class GithubOrg {
         hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
       }
 
-      logger.info(`Fetched ${pullRequests.length} pull requests for ${repoName}`);
+      logger.info(`Fetched pull requests: ${pullRequests.length}`);
 
       return pullRequests;
     } catch (error) {
