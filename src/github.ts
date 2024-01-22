@@ -217,8 +217,6 @@ export async function fetchRepoPullRequests(client: typeof graphql, org: string,
         cursor: endCursor,
       });
 
-      console.log((rawResult as any).repository.pullRequests.nodes)
-
       // Validate the raw response
       const result = repositoryPullRequestsSchema.parse(rawResult);
 
