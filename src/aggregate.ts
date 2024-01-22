@@ -126,7 +126,9 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
     for (const { participants, author, merged } of pullRequests) {
       for (const { login, location } of participants.nodes) {
         if (!uniqueParticipants.has(login)) {
-          locations.set(location, (locations.get(location) || 0) + 1);
+          const participartLocation = location || 'Unknown';
+
+          locations.set(participartLocation, (locations.get(participartLocation) || 0) + 1);
           uniqueParticipants.set(login, {
             pullRequestsOpened: 0,
             pullRequestsMerged: 0,
@@ -140,7 +142,7 @@ export async function aggregateData(client: typeof graphql, org: string, reposDa
         const contributionData = uniqueParticipants.get(login);
 
         if (contributionData) {
-          if (author.login === login) {
+          if (author?.login === login) {
             contributionData.pullRequestsOpened++; // Increment if the participant is the author
             if (merged) {
               contributionData.pullRequestsMerged++; // Increment if the participant is the author and the PR is merged
@@ -225,8 +227,12 @@ function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics
 
   for (const issue of closed) {
     const created = new Date(issue.createdAt);
-    const closed = new Date(issue.closedAt);
-    metrics.totalTimeToClose += closed.getTime() - created.getTime();
+
+    if (issue.closedAt) {
+      const closed = new Date(issue.closedAt);
+      metrics.totalTimeToClose += closed.getTime() - created.getTime();
+    }
+
     metrics.totalCommentsPerIssue += issue.comments.totalCount;
   }
 
@@ -246,8 +252,12 @@ function processPullRequests(pullRequests: PullRequestNode[], metrics: PRMetrics
 
   for (const pr of merged) {
     const created = new Date(pr.createdAt);
-    const merged = new Date(pr.mergedAt);
-    metrics.totalTimeToMerge += merged.getTime() - created.getTime();
+
+    if (pr.mergedAt) {
+      const merged = new Date(pr.mergedAt);
+      metrics.totalTimeToMerge += merged.getTime() - created.getTime();
+    }
+
     metrics.totalCommentsPerPR += pr.comments.totalCount;
   }
 
