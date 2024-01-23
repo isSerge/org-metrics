@@ -234,6 +234,7 @@ export class GithubOrg {
         const result = repositoryPullRequestsSchema.parse(rawResult);
 
         const filteredPRs = result.repository.pullRequests.nodes.filter(pr => new Date(pr.createdAt) >= this.since || new Date(pr.updatedAt) >= this.since);
+
         pullRequests = pullRequests.concat(filteredPRs);
         endCursor = result.repository.pullRequests.pageInfo.endCursor;
         hasNextPage = result.repository.pullRequests.pageInfo.hasNextPage;
