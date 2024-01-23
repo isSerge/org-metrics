@@ -42,9 +42,10 @@ const openPr = {
 const mergedPr = {
   ...openPr,
   merged: true,
-  mergedAt: '2021-01-01T00:00:00Z',
+  mergedAt: '2021-02-01T00:00:00Z',
   state: 'MERGED',
   title: 'PR2',
+  comments: { totalCount: 2 },
 }
 
 const initialMetrics = {
@@ -54,27 +55,40 @@ const initialMetrics = {
   totalCommentsPerPR: 0
 };
 
-it('should return 0 for all metrics when no PRs are passed', () => {
+it('processPullRequests should return 0 for all metrics when no PRs are passed', () => {
   const metrics = { ...initialMetrics };
   const result = processPullRequests([], metrics);
   assert.deepEqual(result, metrics);
 });
 
-it('should update metrics for open pull requests', () => {
+it('processPullRequests should update metrics for open pull requests', () => {
   const metrics = { ...initialMetrics };
   const result = processPullRequests([openPr], metrics);
   assert.equal(result.openPRsCount, 1);
 });
 
-it('should update metrics for merged pull requests', () => {
+it('processPullRequests should update metrics for merged pull requests', () => {
   const metrics = { ...initialMetrics };
   const result = processPullRequests([mergedPr], metrics);
   assert.equal(result.mergedPRsCount, 1);
 });
 
-it('should update metrics for both open and merged pull requests', () => {
+it('processPullRequests should update metrics for both open and merged pull requests', () => {
   const metrics = { ...initialMetrics };
   const result = processPullRequests([openPr, mergedPr], metrics);
   assert.equal(result.openPRsCount, 1);
   assert.equal(result.mergedPRsCount, 1);
+});
+
+it('processPullRequests should update totalTimeToMerge', () => {
+  const metrics = { ...initialMetrics };
+  const result = processPullRequests([mergedPr], metrics);
+  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+  assert.equal(result.totalTimeToMerge, new Date(mergedPr.mergedAt!).getTime() - new Date(mergedPr.createdAt).getTime());
+});
+
+it('processPullRequests should update totalCommentsPerPR', () => {
+  const metrics = { ...initialMetrics };
+  const result = processPullRequests([mergedPr], metrics);
+  assert.equal(result.totalCommentsPerPR, mergedPr.comments.totalCount);
 });
