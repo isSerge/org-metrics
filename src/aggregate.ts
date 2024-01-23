@@ -253,7 +253,7 @@ function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics
  * @param metrics - Pull request metrics
  * @returns - Updated metrics
  */
-function processPullRequests(pullRequests: PullRequestNode[], metrics: PRMetrics) {
+export function processPullRequests(pullRequests: PullRequestNode[], metrics: PRMetrics) {
   const [open, merged] = getOpenAndMergedPrs(pullRequests);
   metrics.openPRsCount += open.length;
   metrics.mergedPRsCount += merged.length;
