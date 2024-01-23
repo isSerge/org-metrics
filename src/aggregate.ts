@@ -149,14 +149,15 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
             contributionData.pullRequestsOpened++; // Increment if the participant is the author
             if (merged) {
               contributionData.pullRequestsMerged++; // Increment if the participant is the author and the PR is merged
+
+              // Increment lines added and removed
+              for (const { additions, deletions } of files.nodes) {
+                contributionData.linesAdded += additions;
+                contributionData.linesRemoved += deletions;
+              }
             }
           } else {
             contributionData.pullRequestComments++; // Increment for non-authors who comment
-          }
-
-          for (const { additions, deletions } of files.nodes) {
-            contributionData.linesAdded += additions;
-            contributionData.linesRemoved += deletions;
           }
         }
       }
