@@ -39,7 +39,7 @@ const queries = {
   fetchRepoIssues: `
     query ($org: String!, $repoName: String!, $since: DateTime!, $cursor: String) {
       repository(owner: $org, name: $repoName) {
-        issues(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
+        issues(first: 50, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}, filterBy: {since: $since}) {
           totalCount
           nodes {
             title
@@ -67,7 +67,7 @@ const queries = {
   fetchRepoPullRequests: `
     query ($org: String!, $repoName: String!, $cursor: String) {
       repository(owner: $org, name: $repoName) {
-        pullRequests(first: 100, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
+        pullRequests(first: 50, after: $cursor, orderBy: {field: UPDATED_AT, direction: DESC}) {
           totalCount
           nodes {
             title
@@ -81,7 +81,7 @@ const queries = {
             state
             closedAt
             updatedAt
-            participants(first: 100) {
+            participants(first: 10) {
               nodes {
                 login
                 location
@@ -91,7 +91,7 @@ const queries = {
               login
             }
             merged
-            files(first: 100) {
+            files(first: 10) {
               nodes {
                 additions
                 deletions
