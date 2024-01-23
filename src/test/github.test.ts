@@ -58,6 +58,14 @@ const mockPullRequest = {
         location: 'testLocation2',
       }
     ]
+  },
+  files: {
+    nodes: [
+      {
+        additions: 1,
+        deletions: 1,
+      }
+    ]
   }
 };
 
