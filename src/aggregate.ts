@@ -229,7 +229,7 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
  * @param metrics - Issue metrics
  * @returns - Updated metrics
  */
-function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
+export function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
   const [open, closed] = getOpenAndClosedIssues(issues);
   metrics.openIssuesCount += open.length;
   metrics.closedIssuesCount += closed.length;
