@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { processPullRequests } from '../../aggregate';
+import { updatePullRequestMetrics } from '../../aggregate';
 
 const openPr = {
   title: 'PR1',
@@ -55,40 +55,40 @@ const initialMetricsPRs = {
   totalCommentsPerPR: 0
 };
 
-it('processPullRequests should return 0 for all metrics when no PRs are passed', () => {
+it('updatePullRequestMetrics should return 0 for all metrics when no PRs are passed', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([], metrics);
+  const result = updatePullRequestMetrics([], metrics);
   assert.deepEqual(result, metrics);
 });
 
-it('processPullRequests should update metrics for open pull requests', () => {
+it('updatePullRequestMetrics should update metrics for open pull requests', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([openPr], metrics);
+  const result = updatePullRequestMetrics([openPr], metrics);
   assert.equal(result.openPRsCount, 1);
 });
 
-it('processPullRequests should update metrics for merged pull requests', () => {
+it('updatePullRequestMetrics should update metrics for merged pull requests', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([mergedPr], metrics);
+  const result = updatePullRequestMetrics([mergedPr], metrics);
   assert.equal(result.mergedPRsCount, 1);
 });
 
-it('processPullRequests should update metrics for both open and merged pull requests', () => {
+it('updatePullRequestMetrics should update metrics for both open and merged pull requests', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([openPr, mergedPr], metrics);
+  const result = updatePullRequestMetrics([openPr, mergedPr], metrics);
   assert.equal(result.openPRsCount, 1);
   assert.equal(result.mergedPRsCount, 1);
 });
 
-it('processPullRequests should update totalTimeToMerge', () => {
+it('updatePullRequestMetrics should update totalTimeToMerge', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([mergedPr], metrics);
+  const result = updatePullRequestMetrics([mergedPr], metrics);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   assert.equal(result.totalTimeToMerge, new Date(mergedPr.mergedAt!).getTime() - new Date(mergedPr.createdAt).getTime());
 });
 
-it('processPullRequests should update totalCommentsPerPR', () => {
+it('updatePullRequestMetrics should update totalCommentsPerPR', () => {
   const metrics = { ...initialMetricsPRs };
-  const result = processPullRequests([mergedPr], metrics);
+  const result = updatePullRequestMetrics([mergedPr], metrics);
   assert.equal(result.totalCommentsPerPR, mergedPr.comments.totalCount);
 });

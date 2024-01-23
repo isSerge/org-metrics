@@ -121,47 +121,10 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
     const issues = await githubOrgApi.fetchRepoIssues(repo.name);
     const pullRequests = await githubOrgApi.fetchRepoPullRequests(repo.name);
 
-    issueMetrics = processIssues(issues, issueMetrics);
-    prMetrics = processPullRequests(pullRequests, prMetrics);
+    issueMetrics = updateIssueMetrics(issues, issueMetrics);
+    prMetrics = updatePullRequestMetrics(pullRequests, prMetrics);
 
-    for (const { participants, author, merged, files } of pullRequests) {
-      for (const { login, location } of participants.nodes) {
-        if (!uniqueParticipants.has(login)) {
-          const participartLocation = location || 'Unknown';
-
-          locations.set(participartLocation, (locations.get(participartLocation) || 0) + 1);
-          uniqueParticipants.set(login, {
-            pullRequestsOpened: 0,
-            pullRequestsMerged: 0,
-            pullRequestComments: 0,
-            linesAdded: 0,
-            linesRemoved: 0,
-            // issuesCreated: 0,
-            // issuesComments: 0,
-            // issuesClosed: 0,
-          });
-        }
-
-        const contributionData = uniqueParticipants.get(login);
-
-        if (contributionData) {
-          if (author?.login === login) {
-            contributionData.pullRequestsOpened++; // Increment if the participant is the author
-            if (merged) {
-              contributionData.pullRequestsMerged++; // Increment if the participant is the author and the PR is merged
-
-              // Increment lines added and removed
-              for (const { additions, deletions } of files.nodes) {
-                contributionData.linesAdded += additions;
-                contributionData.linesRemoved += deletions;
-              }
-            }
-          } else {
-            contributionData.pullRequestComments++; // Increment for non-authors who comment
-          }
-        }
-      }
-    }
+    updateContributorsData(pullRequests, locations, uniqueParticipants);
 
     // for (const { participants, author, closed } of issues) {
     //   for (const { login, location } of participants.nodes) {
@@ -229,7 +192,7 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
  * @param metrics - Issue metrics
  * @returns - Updated metrics
  */
-export function processIssues(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
+export function updateIssueMetrics(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
   const [open, closed] = getOpenAndClosedIssues(issues);
   metrics.openIssuesCount += open.length;
   metrics.closedIssuesCount += closed.length;
@@ -254,7 +217,7 @@ export function processIssues(issues: IssueNode[], metrics: IssueMetrics): Issue
  * @param metrics - Pull request metrics
  * @returns - Updated metrics
  */
-export function processPullRequests(pullRequests: PullRequestNode[], metrics: PRMetrics) {
+export function updatePullRequestMetrics(pullRequests: PullRequestNode[], metrics: PRMetrics) {
   const [open, merged] = getOpenAndMergedPrs(pullRequests);
   metrics.openPRsCount += open.length;
   metrics.mergedPRsCount += merged.length;
@@ -271,4 +234,45 @@ export function processPullRequests(pullRequests: PullRequestNode[], metrics: PR
   }
 
   return metrics;
+}
+
+export function updateContributorsData(pullRequests: PullRequestNode[], locations: Map<string, number>, uniqueParticipants: Map<string, ContributionData>) {
+  for (const { participants, author, merged, files } of pullRequests) {
+    for (const { login, location } of participants.nodes) {
+      if (!uniqueParticipants.has(login)) {
+        const participartLocation = location || 'Unknown';
+
+        locations.set(participartLocation, (locations.get(participartLocation) || 0) + 1);
+        uniqueParticipants.set(login, {
+          pullRequestsOpened: 0,
+          pullRequestsMerged: 0,
+          pullRequestComments: 0,
+          linesAdded: 0,
+          linesRemoved: 0,
+          // issuesCreated: 0,
+          // issuesComments: 0,
+          // issuesClosed: 0,
+        });
+      }
+
+      const contributionData = uniqueParticipants.get(login);
+
+      if (contributionData) {
+        if (author?.login === login) {
+          contributionData.pullRequestsOpened++; // Increment if the participant is the author
+          if (merged) {
+            contributionData.pullRequestsMerged++; // Increment if the participant is the author and the PR is merged
+
+            // Increment lines added and removed
+            for (const { additions, deletions } of files.nodes) {
+              contributionData.linesAdded += additions;
+              contributionData.linesRemoved += deletions;
+            }
+          }
+        } else {
+          contributionData.pullRequestComments++; // Increment for non-authors who comment
+        }
+      }
+    }
+  }
 }

@@ -1,6 +1,6 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
-import { processIssues } from '../../aggregate';
+import { updateIssueMetrics } from '../../aggregate';
 
 const openIssue = {
   state: 'OPEN',
@@ -36,40 +36,40 @@ const initialMetricsIssues = {
   totalCommentsPerIssue: 0
 };
 
-it('processIssues should return 0 for all metrics when no issues are passed', () => {
+it('updateIssueMetrics should return 0 for all metrics when no issues are passed', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([], metrics);
+  const result = updateIssueMetrics([], metrics);
   assert.deepEqual(result, metrics);
 });
 
-it('processIssues should update metrics for open issues', () => {
+it('updateIssueMetrics should update metrics for open issues', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([openIssue], metrics);
+  const result = updateIssueMetrics([openIssue], metrics);
   assert.equal(result.openIssuesCount, 1);
 });
 
-it('processIssues should update metrics for closed issues', () => {
+it('updateIssueMetrics should update metrics for closed issues', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([closedIssue], metrics);
+  const result = updateIssueMetrics([closedIssue], metrics);
   assert.equal(result.closedIssuesCount, 1);
 });
 
-it('processIssues should update metrics for both open and closed issues', () => {
+it('updateIssueMetrics should update metrics for both open and closed issues', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([openIssue, closedIssue], metrics);
+  const result = updateIssueMetrics([openIssue, closedIssue], metrics);
   assert.equal(result.openIssuesCount, 1);
   assert.equal(result.closedIssuesCount, 1);
 });
 
-it('processIssues should update totalTimeToClose for closed issues', () => {
+it('updateIssueMetrics should update totalTimeToClose for closed issues', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([closedIssue], metrics);
+  const result = updateIssueMetrics([closedIssue], metrics);
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   assert.equal(result.totalTimeToClose, new Date(closedIssue.closedAt!).getTime() - new Date(closedIssue.createdAt).getTime());
 });
 
-it('processIssues should update totalCommentsPerIssue', () => {
+it('updateIssueMetrics should update totalCommentsPerIssue', () => {
   const metrics = { ...initialMetricsIssues };
-  const result = processIssues([closedIssue], metrics);
+  const result = updateIssueMetrics([closedIssue], metrics);
   assert.equal(result.totalCommentsPerIssue, closedIssue.comments.totalCount);
 });
