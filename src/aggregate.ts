@@ -91,6 +91,8 @@ interface ContributionData {
   pullRequestsOpened: number;
   pullRequestsMerged: number;
   pullRequestComments: number;
+  linesAdded: number;
+  linesRemoved: number;
   // issuesCreated: number;
   // issuesComments: number;
   // issuesClosed: number;
@@ -122,7 +124,7 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
     issueMetrics = processIssues(issues, issueMetrics);
     prMetrics = processPullRequests(pullRequests, prMetrics);
 
-    for (const { participants, author, merged } of pullRequests) {
+    for (const { participants, author, merged, files } of pullRequests) {
       for (const { login, location } of participants.nodes) {
         if (!uniqueParticipants.has(login)) {
           const participartLocation = location || 'Unknown';
@@ -132,6 +134,8 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
             pullRequestsOpened: 0,
             pullRequestsMerged: 0,
             pullRequestComments: 0,
+            linesAdded: 0,
+            linesRemoved: 0,
             // issuesCreated: 0,
             // issuesComments: 0,
             // issuesClosed: 0,
@@ -148,6 +152,11 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
             }
           } else {
             contributionData.pullRequestComments++; // Increment for non-authors who comment
+          }
+
+          for (const { additions, deletions } of files.nodes) {
+            contributionData.linesAdded += additions;
+            contributionData.linesRemoved += deletions;
           }
         }
       }

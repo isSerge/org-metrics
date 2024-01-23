@@ -70,6 +70,12 @@ const pullRequestNodeSchema = z.object({
     participants: z.object({ nodes: z.array(participantSchema) }),
     author: authorSchema,
     merged: z.boolean(),
+    files: z.object({
+        nodes: z.array(z.object({
+            additions: z.number(),
+            deletions: z.number()
+        })),
+    }),
 });
 
 const pullRequestsSchema = z.object({

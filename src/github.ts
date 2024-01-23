@@ -91,6 +91,12 @@ const queries = {
               login
             }
             merged
+            files(first: 100) {
+              nodes {
+                additions
+                deletions
+              }
+            }
           }
           pageInfo {
             endCursor
