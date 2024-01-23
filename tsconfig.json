@@ -3,7 +3,7 @@
     "outDir": "./dist",
     "target": "ES2020",
     "moduleResolution": "node",
-    "module": "commonjs",
+    "module": "ESNext",
     "skipLibCheck": true,
     "strict": true,
     "forceConsistentCasingInFileNames": true,
@@ -12,7 +12,5 @@
     "noUnusedLocals": true,
     "resolveJsonModule": true
   },
-  "include": [
-    "./src/**/*"
-  ]
+  "include": ["./src/**/*"]
 }
