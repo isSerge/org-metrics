@@ -21,7 +21,7 @@ const mockIssue = {
 };
 
 const silentLogger = pino({
-  level: 'silent'
+  level: 'silent',
 });
 
 it('fetchRepoIssues should return a list of issues', async () => {
@@ -34,9 +34,9 @@ it('fetchRepoIssues should return a list of issues', async () => {
           nodes: mockIssues,
           pageInfo: { hasNextPage: false, endCursor: 'cursor1' },
           totalCount: mockIssues.length,
-        }
-      }
-    }
+        },
+      },
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -55,8 +55,8 @@ it('fetchRepoIssues should return a list of issues', async () => {
 it('fetchRepoIssues should throw error if response validation fails', async () => {
   const mockClient = async () => {
     return {
-      incorrectResponseObject: {}
-    }
+      incorrectResponseObject: {},
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -93,4 +93,3 @@ it('fetchRepoIssues should throw error if graphql client throws', async () => {
     assert.ok(error);
   }
 });
-

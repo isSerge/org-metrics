@@ -22,8 +22,8 @@ const openPr = {
       {
         login: 'testUser2',
         location: 'testLocation2',
-      }
-    ]
+      },
+    ],
   },
   author: {
     login: 'testUser',
@@ -34,10 +34,10 @@ const openPr = {
       {
         additions: 1,
         deletions: 1,
-      }
-    ]
-  }
-}
+      },
+    ],
+  },
+};
 
 const mergedPr = {
   ...openPr,
@@ -46,13 +46,13 @@ const mergedPr = {
   state: 'MERGED',
   title: 'PR2',
   comments: { totalCount: 2 },
-}
+};
 
 const initialMetricsPRs = {
   openPRsCount: 0,
   mergedPRsCount: 0,
   totalTimeToMerge: 0,
-  totalCommentsPerPR: 0
+  totalCommentsPerPR: 0,
 };
 
 it('updatePullRequestMetrics should return 0 for all metrics when no PRs are passed', () => {
@@ -83,8 +83,10 @@ it('updatePullRequestMetrics should update metrics for both open and merged pull
 it('updatePullRequestMetrics should update totalTimeToMerge', () => {
   const metrics = { ...initialMetricsPRs };
   const result = updatePullRequestMetrics([mergedPr], metrics);
+  const created = new Date(mergedPr.createdAt).getTime();
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  assert.equal(result.totalTimeToMerge, new Date(mergedPr.mergedAt!).getTime() - new Date(mergedPr.createdAt).getTime());
+  const merged = new Date(mergedPr.mergedAt!).getTime();
+  assert.equal(result.totalTimeToMerge, created - merged);
 });
 
 it('updatePullRequestMetrics should update totalCommentsPerPR', () => {

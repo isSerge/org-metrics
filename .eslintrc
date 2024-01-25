@@ -6,7 +6,8 @@
   },
   "plugins": [
     "eslint-plugin",
-    "@typescript-eslint"
+    "@typescript-eslint",
+    "prettier"
   ],
   "extends": [
     "eslint:recommended",
@@ -28,6 +29,7 @@
   ],
   "parser": "@typescript-eslint/parser",
   "rules": {
+    "prettier/prettier": "error",
     "@typescript-eslint/prefer-readonly": [
       1,
       {

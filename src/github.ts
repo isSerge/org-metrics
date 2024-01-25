@@ -1,5 +1,5 @@
 import { graphql } from '@octokit/graphql';
-import { Logger } from "pino";
+import { Logger } from 'pino';
 import {
   RepositoryNode,
   IssueNode,
@@ -8,8 +8,8 @@ import {
   stringSchema,
   dateSchema,
   repositoryPullRequestsSchema,
-  repositoryIssuesSchema
-} from "./types";
+  repositoryIssuesSchema,
+} from './types';
 import { handleException } from './error';
 
 const queries = {
@@ -120,7 +120,7 @@ interface GithubOrgApiDependencies {
  * @param client - Github graphql client
  * @param org - Github organization name
  * @param since - Date since when the data should be fetched
-*/
+ */
 export class GithubOrg {
   private readonly client: typeof graphql;
   private readonly org: string;
@@ -141,8 +141,11 @@ export class GithubOrg {
   /**
    * Fetches all repositories for an organization
    * @returns - Total number of repositories and active repositories for a given period
-  */
-  public async fetchOrganizationRepos(): Promise<{ totalRepos: number, activeRepos: RepositoryNode[] } | void> {
+   */
+  public async fetchOrganizationRepos(): Promise<{
+    totalRepos: number;
+    activeRepos: RepositoryNode[];
+  } | void> {
     this.logger.info(`Fetching repos for organization: ${this.org}`);
 
     try {
@@ -151,15 +154,22 @@ export class GithubOrg {
       const allRepos = [];
 
       while (hasNextPage) {
-        const rawResult = await this.client(queries.fetchOrganizationRepos, { org: this.org, cursor });
+        const rawResult = await this.client(queries.fetchOrganizationRepos, {
+          org: this.org,
+          cursor,
+        });
         // Validate the raw response
         const result = organizationSchema.parse(rawResult);
-        allRepos.push(...result.organization.repositories.edges.map(edge => edge.node));
+        allRepos.push(
+          ...result.organization.repositories.edges.map((edge) => edge.node)
+        );
         hasNextPage = result.organization.repositories.pageInfo.hasNextPage;
         cursor = result.organization.repositories.pageInfo.endCursor;
       }
 
-      const filteredByPushedAt = allRepos.filter(repo => new Date(repo.pushedAt) >= this.since);
+      const filteredByPushedAt = allRepos.filter(
+        (repo) => new Date(repo.pushedAt) >= this.since
+      );
 
       this.logger.info(`Fetched repos: ${filteredByPushedAt.length}`);
 
@@ -176,7 +186,7 @@ export class GithubOrg {
    * Fetches all issues for a repository since a given date till now
    * @param repoName - Repository name
    * @returns - All issues for a repository since a given date till now
-  */
+   */
   public async fetchRepoIssues(repoName: string): Promise<IssueNode[]> {
     // Validate inputs
     stringSchema.parse(repoName);
@@ -193,7 +203,7 @@ export class GithubOrg {
           repoName,
           since: this.since.toISOString(),
           org: this.org,
-          cursor: endCursor
+          cursor: endCursor,
         });
 
         // Validate the raw response
@@ -217,8 +227,10 @@ export class GithubOrg {
    * Fetches all pull requests for a repository since a given date till now
    * @param repoName - Repository name
    * @returns - All pull requests for a repository since a given date till now
-  */
-  public async fetchRepoPullRequests(repoName: string): Promise<PullRequestNode[]> {
+   */
+  public async fetchRepoPullRequests(
+    repoName: string
+  ): Promise<PullRequestNode[]> {
     // Validate inputs
     stringSchema.parse(repoName);
 
@@ -239,7 +251,11 @@ export class GithubOrg {
         // Validate the raw response
         const result = repositoryPullRequestsSchema.parse(rawResult);
 
-        const filteredPRs = result.repository.pullRequests.nodes.filter(pr => new Date(pr.createdAt) >= this.since || new Date(pr.updatedAt) >= this.since);
+        const filteredPRs = result.repository.pullRequests.nodes.filter(
+          (pr) =>
+            new Date(pr.createdAt) >= this.since ||
+            new Date(pr.updatedAt) >= this.since
+        );
 
         pullRequests = pullRequests.concat(filteredPRs);
         endCursor = result.repository.pullRequests.pageInfo.endCursor;

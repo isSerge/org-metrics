@@ -18,10 +18,10 @@ const mockRepo = {
     pushedAt: since.toISOString(),
   },
   cursor: 'cursor1',
-}
+};
 
 const silentLogger = pino({
-  level: 'silent'
+  level: 'silent',
 });
 
 it('fetchOrganizationRepos should return a list of repositories', async () => {
@@ -32,10 +32,10 @@ it('fetchOrganizationRepos should return a list of repositories', async () => {
       organization: {
         repositories: {
           edges: mockRepos,
-          pageInfo: { hasNextPage: false, endCursor: 'cursor1' }
-        }
-      }
-    }
+          pageInfo: { hasNextPage: false, endCursor: 'cursor1' },
+        },
+      },
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -54,8 +54,8 @@ it('fetchOrganizationRepos should return a list of repositories', async () => {
 it('fetchOrganizationRepos should throw error if response validation fails', async () => {
   const mockClient = async () => {
     return {
-      incorrectResponseObject: {}
-    }
+      incorrectResponseObject: {},
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -87,12 +87,15 @@ it('fetchOrganizationRepos should handle pagination correctly', async () => {
                 ...mockRepo.node,
                 name: `Repo${callCount}`,
               },
-              cursor: `cursor${callCount}`
+              cursor: `cursor${callCount}`,
             },
           ],
-          pageInfo: { hasNextPage: callCount < 2, endCursor: `cursor${callCount}` }
-        }
-      }
+          pageInfo: {
+            hasNextPage: callCount < 2,
+            endCursor: `cursor${callCount}`,
+          },
+        },
+      },
     };
   };
 

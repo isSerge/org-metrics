@@ -1,108 +1,114 @@
 import { z } from 'zod';
 
 const pageInfoSchema = z.object({
-    endCursor: z.string().nullable(),
-    hasNextPage: z.boolean(),
+  endCursor: z.string().nullable(),
+  hasNextPage: z.boolean(),
 });
 
 const repositoryNodeSchema = z.object({
-    name: z.string(),
-    description: z.string().nullable(),
-    url: z.string(),
-    stargazerCount: z.number(),
-    forkCount: z.number(),
-    pushedAt: z.string(),
+  name: z.string(),
+  description: z.string().nullable(),
+  url: z.string(),
+  stargazerCount: z.number(),
+  forkCount: z.number(),
+  pushedAt: z.string(),
 });
 
 const repositoriesSchema = z.object({
-    edges: z.array(z.object({
-        node: repositoryNodeSchema,
-        cursor: z.string(),
-    })),
-    pageInfo: pageInfoSchema,
+  edges: z.array(
+    z.object({
+      node: repositoryNodeSchema,
+      cursor: z.string(),
+    })
+  ),
+  pageInfo: pageInfoSchema,
 });
 
 const labelSchema = z.object({
-    totalCount: z.number(),
+  totalCount: z.number(),
 });
 
 const commentSchema = z.object({
-    totalCount: z.number(),
+  totalCount: z.number(),
 });
 
 const issueNodeSchema = z.object({
-    title: z.string(),
-    url: z.string(),
-    comments: commentSchema,
-    createdAt: z.string(),
-    labels: labelSchema,
-    number: z.number(),
-    state: z.string(),
-    closedAt: z.string().nullable(),
-    updatedAt: z.string(),
+  title: z.string(),
+  url: z.string(),
+  comments: commentSchema,
+  createdAt: z.string(),
+  labels: labelSchema,
+  number: z.number(),
+  state: z.string(),
+  closedAt: z.string().nullable(),
+  updatedAt: z.string(),
 });
 
 const issuesSchema = z.object({
-    totalCount: z.number(),
-    nodes: z.array(issueNodeSchema),
-    pageInfo: pageInfoSchema,
+  totalCount: z.number(),
+  nodes: z.array(issueNodeSchema),
+  pageInfo: pageInfoSchema,
 });
 
-const authorSchema = z.object({
+const authorSchema = z
+  .object({
     login: z.string(),
-}).nullable();
+  })
+  .nullable();
 
 const participantSchema = z.object({
-    login: z.string(),
-    location: z.string().nullable(),
+  login: z.string(),
+  location: z.string().nullable(),
 });
 
 const pullRequestNodeSchema = z.object({
-    title: z.string(),
-    url: z.string(),
-    comments: z.object({ totalCount: z.number() }),
-    createdAt: z.string(),
-    mergedAt: z.string().nullable(),
-    number: z.number(),
-    state: z.string(),
-    closedAt: z.string().nullable(),
-    updatedAt: z.string(),
-    participants: z.object({ nodes: z.array(participantSchema) }),
-    author: authorSchema,
-    merged: z.boolean(),
-    files: z.object({
-        nodes: z.array(z.object({
-            additions: z.number(),
-            deletions: z.number()
-        })),
-    }),
+  title: z.string(),
+  url: z.string(),
+  comments: z.object({ totalCount: z.number() }),
+  createdAt: z.string(),
+  mergedAt: z.string().nullable(),
+  number: z.number(),
+  state: z.string(),
+  closedAt: z.string().nullable(),
+  updatedAt: z.string(),
+  participants: z.object({ nodes: z.array(participantSchema) }),
+  author: authorSchema,
+  merged: z.boolean(),
+  files: z.object({
+    nodes: z.array(
+      z.object({
+        additions: z.number(),
+        deletions: z.number(),
+      })
+    ),
+  }),
 });
 
 const pullRequestsSchema = z.object({
-    totalCount: z.number(),
-    nodes: z.array(pullRequestNodeSchema),
-    pageInfo: pageInfoSchema,
+  totalCount: z.number(),
+  nodes: z.array(pullRequestNodeSchema),
+  pageInfo: pageInfoSchema,
 });
 
 export const organizationSchema = z.object({
-    organization: z.object({
-        repositories: repositoriesSchema,
-    }),
+  organization: z.object({
+    repositories: repositoriesSchema,
+  }),
 });
 
 export const dateSchema = z.date();
 export const stringSchema = z.string();
 
 export const repositoryPullRequestsSchema = z.object({
-    repository: z.object({
-        pullRequests: pullRequestsSchema,
-    }),
+  repository: z.object({
+    pullRequests: pullRequestsSchema,
+  }),
 });
 
 export const repositoryIssuesSchema = z.object({
-    repository: z.object({
-        issues: issuesSchema,
-    }),
+  repository: z.object({
+    issues: issuesSchema,
+  }),
 });
 
 export type RepositoryNode = z.infer<typeof repositoryNodeSchema>;

@@ -32,21 +32,21 @@ const mockPullRequest = {
       {
         login: 'testUser2',
         location: 'testLocation2',
-      }
-    ]
+      },
+    ],
   },
   files: {
     nodes: [
       {
         additions: 1,
         deletions: 1,
-      }
-    ]
-  }
+      },
+    ],
+  },
 };
 
 const silentLogger = pino({
-  level: 'silent'
+  level: 'silent',
 });
 
 it('fetchRepoPullRequests should return a list of pull requests', async () => {
@@ -59,9 +59,9 @@ it('fetchRepoPullRequests should return a list of pull requests', async () => {
           nodes: mockPullRequests,
           pageInfo: { hasNextPage: false, endCursor: 'cursor1' },
           totalCount: mockPullRequests.length,
-        }
-      }
-    }
+        },
+      },
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -80,8 +80,8 @@ it('fetchRepoPullRequests should return a list of pull requests', async () => {
 it('fetchRepoPullRequests should throw error if response validation fails', async () => {
   const mockClient = async () => {
     return {
-      incorrectResponseObject: {}
-    }
+      incorrectResponseObject: {},
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -133,10 +133,13 @@ it('fetchRepoPullRequests should handle pagination correctly', async () => {
               title: `PR${callCount}`,
             },
           ],
-          pageInfo: { hasNextPage: callCount < 2, endCursor: `cursor${callCount}` },
+          pageInfo: {
+            hasNextPage: callCount < 2,
+            endCursor: `cursor${callCount}`,
+          },
           totalCount: 1,
-        }
-      }
+        },
+      },
     };
   };
 
@@ -157,8 +160,12 @@ it('fetchRepoPullRequests should filter pull requests based on since date', asyn
   const mockPullRequests = [
     {
       ...mockPullRequest,
-      createdAt: new Date(new Date(since).setDate(since.getDate() - 8)).toISOString(),
-      updatedAt: new Date(new Date(since).setDate(since.getDate() - 8)).toISOString(),
+      createdAt: new Date(
+        new Date(since).setDate(since.getDate() - 8)
+      ).toISOString(),
+      updatedAt: new Date(
+        new Date(since).setDate(since.getDate() - 8)
+      ).toISOString(),
     },
     mockPullRequest,
   ];
@@ -170,9 +177,9 @@ it('fetchRepoPullRequests should filter pull requests based on since date', asyn
           nodes: mockPullRequests,
           pageInfo: { hasNextPage: false, endCursor: 'cursor1' },
           totalCount: mockPullRequests.length,
-        }
-      }
-    }
+        },
+      },
+    };
   };
 
   const githubOrg = new GithubOrg({
@@ -187,4 +194,3 @@ it('fetchRepoPullRequests should filter pull requests based on since date', asyn
   assert.ok(result);
   assert.equal(result.length, 1);
 });
-

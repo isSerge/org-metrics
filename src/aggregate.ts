@@ -1,5 +1,5 @@
-import { GithubOrg } from "./github";
-import { RepositoryNode, IssueNode, PullRequestNode } from "./types";
+import { GithubOrg } from './github';
+import { RepositoryNode, IssueNode, PullRequestNode } from './types';
 
 interface IssueMetrics {
   openIssuesCount: number;
@@ -38,25 +38,31 @@ function millisecondsToDays(milliseconds: number) {
 }
 
 function getOpenAndClosedIssues(issues: IssueNode[]) {
-  return issues.reduce((acc: [IssueNode[], IssueNode[]], issue) => {
-    if (issue.state === 'OPEN') {
-      acc[0].push(issue);
-    } else {
-      acc[1].push(issue);
-    }
-    return acc;
-  }, [[], []]);
+  return issues.reduce(
+    (acc: [IssueNode[], IssueNode[]], issue) => {
+      if (issue.state === 'OPEN') {
+        acc[0].push(issue);
+      } else {
+        acc[1].push(issue);
+      }
+      return acc;
+    },
+    [[], []]
+  );
 }
 
 function getOpenAndMergedPrs(pullRequests: PullRequestNode[]) {
-  return pullRequests.reduce((acc: [PullRequestNode[], PullRequestNode[]], pr) => {
-    if (pr.state === 'OPEN') {
-      acc[0].push(pr);
-    } else if (pr.state === 'MERGED') {
-      acc[1].push(pr);
-    }
-    return acc;
-  }, [[], []]);
+  return pullRequests.reduce(
+    (acc: [PullRequestNode[], PullRequestNode[]], pr) => {
+      if (pr.state === 'OPEN') {
+        acc[0].push(pr);
+      } else if (pr.state === 'MERGED') {
+        acc[1].push(pr);
+      }
+      return acc;
+    },
+    [[], []]
+  );
 }
 
 function calculateAverage(metric: number, count: number) {
@@ -106,7 +112,10 @@ interface ContributionData {
  * @param since - Date since which data is to be fetched
  * @returns - Aggregated data
  */
-export async function aggregateData(githubOrgApi: GithubOrg, reposData: { activeRepos: RepositoryNode[]; totalRepos: number; }): Promise<AggregatedData> {
+export async function aggregateData(
+  githubOrgApi: GithubOrg,
+  reposData: { activeRepos: RepositoryNode[]; totalRepos: number }
+): Promise<AggregatedData> {
   let totalStars = 0;
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
@@ -156,10 +165,23 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
     // }
   }
 
-  const averageTimeToClose = millisecondsToDays(calculateAverage(issueMetrics.totalTimeToClose, issueMetrics.closedIssuesCount));
-  const averageTimeToMerge = millisecondsToDays(calculateAverage(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount));
-  const averageCommentsPerIssue = calculateAverage(issueMetrics.totalCommentsPerIssue, issueMetrics.closedIssuesCount);
-  const averageCommentsPerPR = calculateAverage(prMetrics.totalCommentsPerPR, prMetrics.mergedPRsCount);
+  const averageTimeToClose = millisecondsToDays(
+    calculateAverage(
+      issueMetrics.totalTimeToClose,
+      issueMetrics.closedIssuesCount
+    )
+  );
+  const averageTimeToMerge = millisecondsToDays(
+    calculateAverage(prMetrics.totalTimeToMerge, prMetrics.mergedPRsCount)
+  );
+  const averageCommentsPerIssue = calculateAverage(
+    issueMetrics.totalCommentsPerIssue,
+    issueMetrics.closedIssuesCount
+  );
+  const averageCommentsPerPR = calculateAverage(
+    prMetrics.totalCommentsPerPR,
+    prMetrics.mergedPRsCount
+  );
 
   return {
     totalStars,
@@ -182,7 +204,7 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
       locations,
       uniqueParticipants,
       uniqueParticipantCount: uniqueParticipants.size,
-    }
+    },
   };
 }
 
@@ -192,7 +214,10 @@ export async function aggregateData(githubOrgApi: GithubOrg, reposData: { active
  * @param metrics - Issue metrics
  * @returns - Updated metrics
  */
-export function updateIssueMetrics(issues: IssueNode[], metrics: IssueMetrics): IssueMetrics {
+export function updateIssueMetrics(
+  issues: IssueNode[],
+  metrics: IssueMetrics
+): IssueMetrics {
   const [open, closed] = getOpenAndClosedIssues(issues);
   metrics.openIssuesCount += open.length;
   metrics.closedIssuesCount += closed.length;
@@ -217,7 +242,10 @@ export function updateIssueMetrics(issues: IssueNode[], metrics: IssueMetrics): 
  * @param metrics - Pull request metrics
  * @returns - Updated metrics
  */
-export function updatePullRequestMetrics(pullRequests: PullRequestNode[], metrics: PRMetrics) {
+export function updatePullRequestMetrics(
+  pullRequests: PullRequestNode[],
+  metrics: PRMetrics
+) {
   const [open, merged] = getOpenAndMergedPrs(pullRequests);
   metrics.openPRsCount += open.length;
   metrics.mergedPRsCount += merged.length;
@@ -236,13 +264,20 @@ export function updatePullRequestMetrics(pullRequests: PullRequestNode[], metric
   return metrics;
 }
 
-export function updateContributorsData(pullRequests: PullRequestNode[], locations: Map<string, number>, uniqueParticipants: Map<string, ContributionData>) {
+export function updateContributorsData(
+  pullRequests: PullRequestNode[],
+  locations: Map<string, number>,
+  uniqueParticipants: Map<string, ContributionData>
+) {
   for (const { participants, author, merged, files } of pullRequests) {
     for (const { login, location } of participants.nodes) {
       if (!uniqueParticipants.has(login)) {
         const participartLocation = location || 'Unknown';
 
-        locations.set(participartLocation, (locations.get(participartLocation) || 0) + 1);
+        locations.set(
+          participartLocation,
+          (locations.get(participartLocation) || 0) + 1
+        );
         uniqueParticipants.set(login, {
           pullRequestsOpened: 0,
           pullRequestsMerged: 0,

@@ -15,9 +15,9 @@ const openIssue = {
     totalCount: 1,
     nodes: [
       {
-        name: 'bug'
-      }
-    ]
+        name: 'bug',
+      },
+    ],
   },
 };
 
@@ -26,14 +26,14 @@ const closedIssue = {
   state: 'CLOSED',
   createdAt: '2021-01-01T00:00:00Z',
   closedAt: '2021-01-05T00:00:00Z',
-  comments: { totalCount: 2 }
+  comments: { totalCount: 2 },
 };
 
 const initialMetricsIssues = {
   openIssuesCount: 0,
   closedIssuesCount: 0,
   totalTimeToClose: 0,
-  totalCommentsPerIssue: 0
+  totalCommentsPerIssue: 0,
 };
 
 it('updateIssueMetrics should return 0 for all metrics when no issues are passed', () => {
@@ -64,8 +64,10 @@ it('updateIssueMetrics should update metrics for both open and closed issues', (
 it('updateIssueMetrics should update totalTimeToClose for closed issues', () => {
   const metrics = { ...initialMetricsIssues };
   const result = updateIssueMetrics([closedIssue], metrics);
+  const created = new Date(closedIssue.createdAt).getTime();
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  assert.equal(result.totalTimeToClose, new Date(closedIssue.closedAt!).getTime() - new Date(closedIssue.createdAt).getTime());
+  const closed = new Date(closedIssue.closedAt!).getTime();
+  assert.equal(result.totalTimeToClose, closed - created);
 });
 
 it('updateIssueMetrics should update totalCommentsPerIssue', () => {

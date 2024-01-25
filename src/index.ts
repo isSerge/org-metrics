@@ -1,8 +1,8 @@
 import { graphql } from '@octokit/graphql';
 import { config } from 'dotenv';
 
-import { GithubOrg } from "./github"
-import { aggregateData } from "./aggregate";
+import { GithubOrg } from './github';
+import { aggregateData } from './aggregate';
 import { handleException } from './error';
 import { logger } from './logger';
 
@@ -44,4 +44,3 @@ export async function main() {
 }
 
 main();
-
