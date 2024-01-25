@@ -99,9 +99,6 @@ interface ContributionData {
   pullRequestComments: number;
   linesAdded: number;
   linesRemoved: number;
-  // issuesCreated: number;
-  // issuesComments: number;
-  // issuesClosed: number;
 }
 
 /**
@@ -120,8 +117,8 @@ export async function aggregateData(
   let totalForks = 0;
   let issueMetrics = initializeIssueMetrics();
   let prMetrics = initializePRMetrics();
-  const uniqueParticipants = new Map<string, ContributionData>();
-  const locations = new Map<string, number>();
+  let uniqueParticipants = new Map<string, ContributionData>();
+  let locations = new Map<string, number>();
 
   for (const repo of reposData.activeRepos) {
     totalStars += repo.stargazerCount;
@@ -133,36 +130,11 @@ export async function aggregateData(
     issueMetrics = updateIssueMetrics(issues, issueMetrics);
     prMetrics = updatePullRequestMetrics(pullRequests, prMetrics);
 
-    updateContributorsData(pullRequests, locations, uniqueParticipants);
-
-    // for (const { participants, author, closed } of issues) {
-    //   for (const { login, location } of participants.nodes) {
-    //     if (!uniqueParticipants.has(login)) {
-    //       locations.set(location, (locations.get(location) || 0) + 1);
-    //       uniqueParticipants.set(login, {
-    //         pullRequestsOpened: 0,
-    //         pullRequestsMerged: 0,
-    //         pullRequestComments: 0,
-    //         issuesCreated: 0,
-    //         issuesComments: 0,
-    //         issuesClosed: 0,
-    //       });
-    //     }
-
-    //     const contributionData = uniqueParticipants.get(login);
-
-    //     if (contributionData) {
-    //       if (author.login === login) {
-    //         contributionData.issuesCreated++; // Increment only if the participant is the author
-    //         if (closed) {
-    //           contributionData.issuesClosed++;
-    //         }
-    //       } else {
-    //         contributionData.issuesComments++; // Increment for non-authors who comment
-    //       }
-    //     }
-    //   }
-    // }
+    [locations, uniqueParticipants] = updateContributorsData(
+      pullRequests,
+      locations,
+      uniqueParticipants
+    );
   }
 
   const averageTimeToClose = millisecondsToDays(
@@ -268,29 +240,29 @@ export function updateContributorsData(
   pullRequests: PullRequestNode[],
   locations: Map<string, number>,
   uniqueParticipants: Map<string, ContributionData>
-) {
+): [Map<string, number>, Map<string, ContributionData>] {
+  const newLocations = new Map(locations);
+  const newUniqueParticipants = new Map(uniqueParticipants);
+
   for (const { participants, author, merged, files } of pullRequests) {
     for (const { login, location } of participants.nodes) {
-      if (!uniqueParticipants.has(login)) {
+      if (!newUniqueParticipants.has(login)) {
         const participartLocation = location || 'Unknown';
 
-        locations.set(
+        newLocations.set(
           participartLocation,
-          (locations.get(participartLocation) || 0) + 1
+          (newLocations.get(participartLocation) || 0) + 1
         );
-        uniqueParticipants.set(login, {
+        newUniqueParticipants.set(login, {
           pullRequestsOpened: 0,
           pullRequestsMerged: 0,
           pullRequestComments: 0,
           linesAdded: 0,
           linesRemoved: 0,
-          // issuesCreated: 0,
-          // issuesComments: 0,
-          // issuesClosed: 0,
         });
       }
 
-      const contributionData = uniqueParticipants.get(login);
+      const contributionData = newUniqueParticipants.get(login);
 
       if (contributionData) {
         if (author?.login === login) {
@@ -310,4 +282,6 @@ export function updateContributorsData(
       }
     }
   }
+
+  return [newLocations, newUniqueParticipants];
 }
