@@ -86,7 +86,7 @@ it('updatePullRequestMetrics should update totalTimeToMerge', () => {
   const created = new Date(mergedPr.createdAt).getTime();
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const merged = new Date(mergedPr.mergedAt!).getTime();
-  assert.equal(result.totalTimeToMerge, created - merged);
+  assert.equal(result.totalTimeToMerge, merged - created);
 });
 
 it('updatePullRequestMetrics should update totalCommentsPerPR', () => {
