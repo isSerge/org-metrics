@@ -1,56 +1,11 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import { graphql } from '@octokit/graphql';
-import pino from 'pino';
 import { GithubOrg } from '../../github';
-
-const since = new Date();
-
-since.setDate(since.getDate() - 7);
-
-const mockPullRequest = {
-  title: 'PR1',
-  url: '',
-  comments: { totalCount: 1 },
-  createdAt: since.toISOString(),
-  mergedAt: since.toISOString(),
-  number: 1,
-  state: 'MERGED',
-  closedAt: null,
-  updatedAt: since.toISOString(),
-  merged: true,
-  author: {
-    login: 'testUser',
-    location: 'testLocation',
-  },
-  participants: {
-    nodes: [
-      {
-        login: 'testUser',
-        location: 'testLocation',
-      },
-      {
-        login: 'testUser2',
-        location: 'testLocation2',
-      },
-    ],
-  },
-  files: {
-    nodes: [
-      {
-        additions: 1,
-        deletions: 1,
-      },
-    ],
-  },
-};
-
-const silentLogger = pino({
-  level: 'silent',
-});
+import { since, silentLogger, openPrMock } from '../common';
 
 it('fetchRepoPullRequests should return a list of pull requests', async () => {
-  const mockPullRequests = [mockPullRequest];
+  const mockPullRequests = [openPrMock];
 
   const mockClient = async () => {
     return {
@@ -129,7 +84,7 @@ it('fetchRepoPullRequests should handle pagination correctly', async () => {
         pullRequests: {
           nodes: [
             {
-              ...mockPullRequest,
+              ...openPrMock,
               title: `PR${callCount}`,
             },
           ],
@@ -159,7 +114,7 @@ it('fetchRepoPullRequests should handle pagination correctly', async () => {
 it('fetchRepoPullRequests should filter pull requests based on since date', async () => {
   const mockPullRequests = [
     {
-      ...mockPullRequest,
+      ...openPrMock,
       createdAt: new Date(
         new Date(since).setDate(since.getDate() - 8)
       ).toISOString(),
@@ -167,7 +122,7 @@ it('fetchRepoPullRequests should filter pull requests based on since date', asyn
         new Date(since).setDate(since.getDate() - 8)
       ).toISOString(),
     },
-    mockPullRequest,
+    openPrMock,
   ];
 
   const mockClient = async () => {

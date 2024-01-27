@@ -1,12 +1,8 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import { graphql } from '@octokit/graphql';
-import pino from 'pino';
 import { GithubOrg } from '../../github';
-
-const since = new Date();
-
-since.setDate(since.getDate() - 7);
+import { since, silentLogger } from '../common';
 
 const mockRepo = {
   node: {
@@ -19,10 +15,6 @@ const mockRepo = {
   },
   cursor: 'cursor1',
 };
-
-const silentLogger = pino({
-  level: 'silent',
-});
 
 it('fetchOrganizationRepos should return a list of repositories', async () => {
   const mockRepos = [mockRepo];

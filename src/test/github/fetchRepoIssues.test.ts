@@ -1,31 +1,11 @@
 import { it } from 'node:test';
 import * as assert from 'node:assert/strict';
 import { graphql } from '@octokit/graphql';
-import pino from 'pino';
 import { GithubOrg } from '../../github';
-
-const since = new Date();
-
-since.setDate(since.getDate() - 7);
-
-const mockIssue = {
-  title: 'Issue1',
-  url: '',
-  comments: { totalCount: 1 },
-  createdAt: since.toISOString(),
-  labels: { totalCount: 1 },
-  number: 1,
-  state: 'OPEN',
-  closedAt: null,
-  updatedAt: since.toISOString(),
-};
-
-const silentLogger = pino({
-  level: 'silent',
-});
+import { since, silentLogger, openIssueMock } from '../common';
 
 it('fetchRepoIssues should return a list of issues', async () => {
-  const mockIssues = [mockIssue];
+  const mockIssues = [openIssueMock];
 
   const mockClient = async () => {
     return {
